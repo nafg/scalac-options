@@ -18,9 +18,9 @@ generate := {
   }
   val result = runCached(())
   result.allContainers.map { c =>
-    val file = dir / (c.name + ".scala")
+    val file = dir / "options" / (c.name + ".scala")
     IO.write(file,
-      s"""package io.github.nafg.scalacoptions
+      s"""package io.github.nafg.scalacoptions.options
          |
          |${c.code}
          |""".stripMargin)
