@@ -26,15 +26,14 @@ generate := {
          |""".stripMargin)
     file
   } :+ {
-    val file = dir / "ScalacOptions.scala"
+    val file = dir / "ScalacOptionsBase.scala"
     IO.write(file,
       s"""package io.github.nafg.scalacoptions
          |
-         |object ScalacOptions {
-         |  val map = Map(
-         |${result.versionMap.map { case (version, name) => s"""    "$version" -> $name""" }.mkString(",\n")}
+         |trait ScalacOptionsBase {
+         |  val versionMap = Map(
+         |${result.versionMap.map { case (version, name) => s"""    "$version" -> options.$name""" }.mkString(",\n")}
          |  )
-         |  def apply(versionString: String) = map(versionString)
          |}
          |""".stripMargin
     )
