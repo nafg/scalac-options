@@ -1,5 +1,8 @@
 package io.github.nafg.scalacoptions.generator
 
+import sjsonnew.BasicJsonProtocol._
+import sjsonnew._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.io.AnsiColor
@@ -74,6 +77,16 @@ object Generator {
       .sortBy(_.name)(Ordering.comparatorToOrdering(String.CASE_INSENSITIVE_ORDER))
 
   case class Result(allContainers: Seq[Container], versionMap: Map[String, String])
+
+  object Result {
+    implicit val resultLListIso: IsoLList.Aux[Result, Seq[Container] :*: Map[String, String] :*: LNil] =
+      LList.iso(
+        { case Result(allContainers, versionMap) =>
+          ("allContainers" -> allContainers) :*: ("versionMap" -> versionMap) :*: LNil
+        },
+        { case (_, allContainers) :*: (_, versionMap) :*: LNil => Result(allContainers, versionMap) }
+      )
+  }
 
   def run =
     Future.traverse(GetHelpString.versionsAndHelpFlags) { case (version, flags) =>

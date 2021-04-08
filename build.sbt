@@ -1,4 +1,5 @@
 import _root_.io.github.nafg.scalacoptions.generator.Generator
+import sbt.util.CacheImplicits._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -11,7 +12,11 @@ val generate = taskKey[Seq[File]]("Generate code")
 
 generate := {
   val dir = (Compile / sourceManaged).value / "io" / "github" / "nafg" / "scalacoptions"
-  val result = Await.result(Generator.run, Duration.Inf)
+  val cacheStore = streams.value.cacheStoreFactory.make("scalac-options-result")
+  val runCached = Cache.cached[Unit, Generator.Result](cacheStore) { _ =>
+    Await.result(Generator.run, Duration.Inf)
+  }
+  val result = runCached(())
   result.allContainers.map { c =>
     val file = dir / (c.name + ".scala")
     IO.write(file,

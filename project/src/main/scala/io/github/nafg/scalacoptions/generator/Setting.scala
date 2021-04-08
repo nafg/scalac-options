@@ -1,5 +1,8 @@
 package io.github.nafg.scalacoptions.generator
 
+import sjsonnew.BasicJsonProtocol.{BooleanJsonFormat, StringJsonFormat, seqFormat}
+import sjsonnew.{:*:, IsoLList, LList, LNil}
+
 
 case class Setting(name: String,
                    flagSegments: Seq[FlagSegment],
@@ -11,4 +14,20 @@ case class Setting(name: String,
     case (segment, segments)                                                  =>
       segment :: segments
   })
+}
+
+object Setting {
+  implicit val settingLListIso: IsoLList.Aux[Setting, String :*: Seq[FlagSegment] :*: String :*: Boolean :*: LNil] =
+    LList.iso(
+      { case Setting(name, flagSegments, description, isDeprecated) =>
+        ("name" -> name) :*:
+          ("flagSegments" -> flagSegments) :*:
+          ("description" -> description) :*:
+          ("isDeprecated" -> isDeprecated) :*:
+          LNil
+      },
+      { case (_, name) :*: (_, flagSegments) :*: (_, description) :*: (_, isDeprecated) :*: LNil =>
+        Setting(name, flagSegments, description, isDeprecated)
+      }
+    )
 }

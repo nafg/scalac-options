@@ -1,5 +1,10 @@
 package io.github.nafg.scalacoptions.generator
 
+import sbt.util.StampedFormat.lazyFormat
+import sjsonnew.BasicJsonProtocol.{BooleanJsonFormat, StringJsonFormat, isolistFormat, optionFormat, seqFormat}
+import sjsonnew._
+
+
 case class Container(name: String,
                      parent: Option[Container],
                      settings: Seq[Setting],
@@ -30,4 +35,24 @@ case class Container(name: String,
       (if (methods.isEmpty) "" else methods.mkString(" {\n", "\n\n", "\n}")) +
       (if (!isConcrete) "" else s"\n\nobject $name extends $name")
   }
+}
+
+object Container {
+  lazy val containerLListIso: IsoLList.Aux[
+    Container,
+    String :*: Option[Container] :*: Seq[Setting] :*: Boolean :*: LNil
+  ] =
+    LList.iso(
+      { case Container(name, parent, settings, isConcrete) =>
+        ("name" -> name) :*:
+          ("parent" -> parent) :*:
+          ("settings" -> settings) :*:
+          ("isConcrete" -> isConcrete) :*:
+          LNil
+      },
+      { case (_, name) :*: (_, parent) :*: (_, settings) :*: (_, isConcrete) :*: LNil =>
+        Container(name, parent, settings, isConcrete)
+      }
+    )
+  implicit lazy val containerFormat: JsonFormat[Container] = lazyFormat(isolistFormat(containerLListIso))
 }
