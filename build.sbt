@@ -5,8 +5,10 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 
-scalaVersion := "2.12.13"
-scalacOptions += "-deprecation"
+ThisBuild / scalaVersion := "2.12.13"
+ThisBuild / scalacOptions += "-deprecation"
+
+ThisBuild / organization := "io.github.nafg.scalac-options"
 
 val generate = taskKey[Seq[File]]("Generate code")
 
