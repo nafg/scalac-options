@@ -88,6 +88,8 @@ object Generator {
       )
   }
 
+  def prefetch = GetHelpString.fetchAll(GetHelpString.versionsAndHelpFlags.map(_._1)).map(_ => ())
+
   def run =
     Future.traverse(GetHelpString.versionsAndHelpFlags) { case (version, flags) =>
       println(s"Getting output from $version")

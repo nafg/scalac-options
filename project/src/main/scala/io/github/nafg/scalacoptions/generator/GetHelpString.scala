@@ -8,6 +8,16 @@ import scala.concurrent.{ExecutionContext, Future, blocking}
 
 
 object GetHelpString {
+  def dependency(version: String) =
+    Dependency(
+      Module(
+        Organization("org.scala-lang"),
+        ModuleName(if (version.split('.').head.toInt < 3) "scala-compiler" else s"scala3-compiler_$version"),
+        Map.empty
+      ),
+      version
+    )
+
   def run(dependency: Dependency, mainClass: String, flag: String)(implicit ec: ExecutionContext): Future[String] =
     Fetch()
       .addDependencies(dependency)
@@ -23,15 +33,7 @@ object GetHelpString {
 
   def run(version: String, flag: String)(implicit ec: ExecutionContext): Future[String] = {
     run(
-      dependency =
-        Dependency(
-          Module(
-            Organization("org.scala-lang"),
-            ModuleName(if (version.split('.').head.toInt < 3) "scala-compiler" else s"scala3-compiler_$version"),
-            Map.empty
-          ),
-          version
-        ),
+      dependency = dependency(version),
       mainClass = if (version.split('.').head.toInt < 3) "scala.tools.nsc.Main" else "dotty.tools.dotc.Main",
       flag = flag
     )
@@ -55,4 +57,9 @@ object GetHelpString {
     "2.13.5" -> helpFlags213,
     "3.0.0-RC2" -> helpFlags
   )
+
+  def fetchAll(versions: Seq[String]) =
+    Fetch()
+      .addDependencies(versions.map(dependency): _*)
+      .future()
 }

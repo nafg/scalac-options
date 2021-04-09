@@ -10,9 +10,17 @@ ThisBuild / scalacOptions += "-deprecation"
 
 ThisBuild / organization := "io.github.nafg.scalac-options"
 
-val generate = taskKey[Seq[File]]("Generate code")
+val downloadScalaCompilerJars = taskKey[Unit]("Download all scala compiler jars")
+downloadScalaCompilerJars := {
+  streams.value.log.info("Downloading all scala compiler jars...")
+  Await.result(Generator.prefetch, Duration.Inf)
+  streams.value.log.info("Finished downloading all scala compiler jars...")
+}
 
+val generate = taskKey[Seq[File]]("Generate code")
 generate := {
+  downloadScalaCompilerJars.value
+
   val dir = (Compile / sourceManaged).value / "io" / "github" / "nafg" / "scalacoptions"
   val cacheStore = streams.value.cacheStoreFactory.make("scalac-options-result")
   val runCached = Cache.cached[Unit, Generator.Result](cacheStore) { _ =>
