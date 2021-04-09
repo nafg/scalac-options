@@ -90,7 +90,7 @@ object Generator {
 
   def prefetch = GetHelpString.fetchAll(GetHelpString.versionsAndHelpFlags.map(_._1)).map(_ => ())
 
-  def run =
+  def getOutputs =
     Future.traverse(GetHelpString.versionsAndHelpFlags) { case (version, flags) =>
       println(s"Getting output from $version")
       GetHelpString.runner(version)
@@ -100,44 +100,47 @@ object Generator {
           res
         }
     }
-      .map { outputs =>
-        val allSettings =
-          outputs.map { case (version, pages) =>
-            println(s"Parsing settings for $version")
-            version -> parseOutputs(pages.map(_._2))
-          }
 
-        val groupedMajor = allSettings.groupBy(_._1.split('.').take(1))
-        val groupedMinor = allSettings.groupBy(_._1.split('.').take(2))
+  type Outputs = Seq[(String, Seq[(String, String)])]
 
-        val commonAll = common(allSettings.map(_._2))
-        val commonMajor = groupedMajor.mapValues(settings => common(settings.map(_._2)))
-        val commonMinor = groupedMinor.mapValues(settings => common(settings.map(_._2)))
-
-        val commonContainer = Container("Common", None, commonAll, isConcrete = false)
-        val majorContainers =
-          commonMajor
-            .map { case (major, settings) =>
-              major.toList -> Container("V" + major.mkString("_"), Some(commonContainer), settings, isConcrete = false)
-            }
-        val minorContainers =
-          commonMinor
-            .map { case (minor, settings) =>
-              val parent = majorContainers.get(minor.take(1).toList)
-              minor.toList -> Container("V" + minor.mkString("_"), parent, settings, isConcrete = false)
-            }
-        val concreteContainers =
-          allSettings
-            .map { case (version, settings) =>
-              val parent = minorContainers.get(version.split('.').take(2).toList)
-              version -> Container("V" + version.replaceAll("[.-]", "_"), parent, settings, isConcrete = true)
-            }
-            .toMap
-
-        Result(
-          allContainers =
-            List(commonContainer) ++ majorContainers.values ++ minorContainers.values ++ concreteContainers.values,
-          versionMap = concreteContainers.mapValues(_.name)
-        )
+  def parseAllOutputs(outputs: Outputs) = {
+    val allSettings =
+      outputs.map { case (version, pages) =>
+        println(s"Parsing settings for $version")
+        version -> parseOutputs(pages.map(_._2))
       }
+
+    val groupedMajor = allSettings.groupBy(_._1.split('.').take(1))
+    val groupedMinor = allSettings.groupBy(_._1.split('.').take(2))
+
+    val commonAll = common(allSettings.map(_._2))
+    val commonMajor = groupedMajor.mapValues(settings => common(settings.map(_._2)))
+    val commonMinor = groupedMinor.mapValues(settings => common(settings.map(_._2)))
+
+    val commonContainer = Container("Common", None, commonAll, isConcrete = false)
+    val majorContainers =
+      commonMajor
+        .map { case (major, settings) =>
+          major.toList -> Container("V" + major.mkString("_"), Some(commonContainer), settings, isConcrete = false)
+        }
+    val minorContainers =
+      commonMinor
+        .map { case (minor, settings) =>
+          val parent = majorContainers.get(minor.take(1).toList)
+          minor.toList -> Container("V" + minor.mkString("_"), parent, settings, isConcrete = false)
+        }
+    val concreteContainers =
+      allSettings
+        .map { case (version, settings) =>
+          val parent = minorContainers.get(version.split('.').take(2).toList)
+          version -> Container("V" + version.replaceAll("[.-]", "_"), parent, settings, isConcrete = true)
+        }
+        .toMap
+
+    Result(
+      allContainers =
+        List(commonContainer) ++ majorContainers.values ++ minorContainers.values ++ concreteContainers.values,
+      versionMap = concreteContainers.mapValues(_.name)
+    )
+  }
 }

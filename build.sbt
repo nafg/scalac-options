@@ -17,16 +17,30 @@ downloadScalaCompilerJars := {
   streams.value.log.info("Finished downloading all scala compiler jars...")
 }
 
-val generate = taskKey[Seq[File]]("Generate code")
-generate := {
+val getOutputs = taskKey[Generator.Outputs]("Run all scala compilers with help flags and collect the outputs")
+getOutputs := {
   downloadScalaCompilerJars.value
 
-  val dir = (Compile / sourceManaged).value / "io" / "github" / "nafg" / "scalacoptions"
-  val cacheStore = streams.value.cacheStoreFactory.make("scalac-options-result")
-  val runCached = Cache.cached[Unit, Generator.Result](cacheStore) { _ =>
-    Await.result(Generator.run, Duration.Inf)
+  val cacheStore = streams.value.cacheStoreFactory.make("scalac-options-outputs")
+  val runCached = Cache.cached[Unit, Generator.Outputs](cacheStore) { _ =>
+    Await.result(Generator.getOutputs, Duration.Inf)
   }
-  val result = runCached(())
+
+  val outputs = runCached(())
+
+  val dir = streams.value.cacheDirectory
+  for ((version, pages) <- outputs; (flag, output) <- pages)
+    IO.write(dir / version / (flag + ".txt"), output)
+
+  outputs
+}
+
+val generate = taskKey[Seq[File]]("Generate code")
+generate := {
+  val outputs = getOutputs.value
+
+  val dir = (Compile / sourceManaged).value / "io" / "github" / "nafg" / "scalacoptions"
+  val result = Generator.parseAllOutputs(outputs)
   result.allContainers.map { c =>
     val file = dir / "options" / (c.name + ".scala")
     IO.write(file,
