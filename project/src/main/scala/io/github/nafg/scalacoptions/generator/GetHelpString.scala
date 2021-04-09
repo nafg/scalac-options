@@ -18,26 +18,32 @@ object GetHelpString {
       version
     )
 
-  def run(dependency: Dependency, mainClass: String, flag: String)(implicit ec: ExecutionContext): Future[String] =
+  trait Runner {
+    def apply(flag: String): String
+  }
+
+  def runner(dependency: Dependency, mainClass: String)(implicit ec: ExecutionContext): Future[Runner] =
     Fetch()
       .addDependencies(dependency)
       .future()
       .map { files =>
-        val commandResult =
-          blocking {
-            os.proc("java", "-cp", files.mkString(File.pathSeparator), mainClass, flag)
-              .call(stderr = os.Pipe)
+        new Runner {
+          override def apply(flag: String) = {
+            val commandResult =
+              blocking {
+                os.proc("java", "-cp", files.mkString(File.pathSeparator), mainClass, flag)
+                  .call(stderr = os.Pipe)
+              }
+            geny.ByteData.Chunks(commandResult.chunks.map(_.merge)).trim()
           }
-        geny.ByteData.Chunks(commandResult.chunks.map(_.merge)).trim()
+        }
       }
 
-  def run(version: String, flag: String)(implicit ec: ExecutionContext): Future[String] = {
-    run(
+  def runner(version: String)(implicit ec: ExecutionContext): Future[Runner] =
+    runner(
       dependency = dependency(version),
-      mainClass = if (version.split('.').head.toInt < 3) "scala.tools.nsc.Main" else "dotty.tools.dotc.Main",
-      flag = flag
+      mainClass = if (version.split('.').head.toInt < 3) "scala.tools.nsc.Main" else "dotty.tools.dotc.Main"
     )
-  }
 
   val helpFlags = Set("-help", "-X", "-Y")
   val helpFlags213 = helpFlags + "-V" + "-W"

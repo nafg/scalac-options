@@ -93,17 +93,18 @@ object Generator {
   def run =
     Future.traverse(GetHelpString.versionsAndHelpFlags) { case (version, flags) =>
       println(s"Getting output from $version")
-      Future.traverse(flags)(flag => GetHelpString.run(version, flag).map(flag -> _))
-        .map { outputs =>
+      GetHelpString.runner(version)
+        .map { runner =>
+          val res = version -> flags.toSeq.map(flag => flag -> runner(flag))
           println(s"Finished getting output from $version")
-          version -> outputs
+          res
         }
     }
       .map { outputs =>
         val allSettings =
           outputs.map { case (version, pages) =>
             println(s"Parsing settings for $version")
-            version -> parseOutputs(pages.toSeq.map(_._2))
+            version -> parseOutputs(pages.map(_._2))
           }
 
         val groupedMajor = allSettings.groupBy(_._1.split('.').take(1))
