@@ -4,8 +4,10 @@ import fastparse.NoWhitespace._
 import fastparse._
 import pprint.pprintln
 
+import scala.io.AnsiColor
 
-object FastParseParser extends Parser {
+
+object FastParseParser {
   private def spaces[_: P] = P(" ".rep)
 
   private def placeholder[_: P] = P(
@@ -87,9 +89,25 @@ object FastParseParser extends Parser {
   private def settingsGroup[_: P] = P(notSettingLine.!.rep(min = 1, max = 20).map(_.last) ~ settingsCluster)
 
   private def parser[_: P] =
-    P(settingsGroup.rep ~ notSettingLine.rep(min = 0, max = 6)).map(_._1)
+    P(settingsGroup.rep(1) ~ notSettingLine.rep(min = 0, max = 6)).map(_._1)
 
-  override def parse(text: String): Either[Int, Map[String, Seq[Setting]]] =
+  private def printFailureLocation(text: String, index: Int): Unit = {
+    var n = 0
+    for (line <- text.linesIterator if n < index) {
+      if (index <= n || index > n + line.length) {
+        Console.err.println(line)
+      } else {
+        Console.err.println(AnsiColor.RED + line + AnsiColor.RESET)
+        Console.err.println(
+          " " * (index - n) + AnsiColor.RED + "^" + AnsiColor.RESET
+        )
+      }
+
+      n += line.length
+    }
+  }
+
+  def parse(text: String): Map[String, Seq[Setting]] =
     fastparse.parse(text, parser(_), verboseFailures = true) match {
       case Parsed.Success(groups, index) =>
         val asMap = groups.toMap.map {
@@ -103,9 +121,10 @@ object FastParseParser extends Parser {
           println("Remaining: ")
           pprintln(remaining)
         }
-        Right(all)
+        all
       case failure: Parsed.Failure       =>
         Console.err.println(failure.trace(enableLogging = true).longAggregateMsg)
-        Left(failure.index)
+        printFailureLocation(text, failure.index)
+        throw new Exception(s"Parse Error, ${failure.msg}")
     }
 }

@@ -5,39 +5,13 @@ import sjsonnew._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.io.AnsiColor
 
 
 object Generator {
   lazy val parser = FastParseParser
 
-  private def printFailureLocation(text: String, index: Int): Unit = {
-    var n = 0
-    for (line <- text.linesIterator if n < index) {
-      if (index <= n || index > n + line.length) {
-        Console.err.println(line)
-      } else {
-        Console.err.println(AnsiColor.RED + line + AnsiColor.RESET)
-        Console.err.println(
-          " " * (index - n) + AnsiColor.RED + "^" + AnsiColor.RESET
-        )
-      }
-
-      n += line.length
-    }
-  }
-
   private def parseOutputs(outputs: Seq[String]) =
-    outputs
-      .flatMap { output =>
-        parser.parse(output) match {
-          case Right(all)  => List(all)
-          case Left(index) =>
-            printFailureLocation(output, index)
-            Nil
-        }
-      }
-      .flatten.toMap.values.flatten.toSeq
+    outputs.flatMap(parser.parse).toMap.values.flatten.toSeq
       .groupBy(_.name)
       .flatMap { case (_, settings) =>
         val unique = settings.map(_.mergeLiteralSegments).distinct
