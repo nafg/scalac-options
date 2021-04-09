@@ -1,29 +1,41 @@
 package io.github.nafg.scalacoptions.generator
 
+import coursier.core.{Module, ModuleName, Organization}
+import coursier.{Dependency, Fetch}
+
+import java.io.File
 import scala.concurrent.{ExecutionContext, Future, blocking}
 
 
 object GetHelpString {
-  def run(app: String, version: String, flag: String)(implicit ec: ExecutionContext) =
-    Future {
-      geny.ByteData
-        .Chunks(
+  def run(dependency: Dependency, mainClass: String, flag: String)(implicit ec: ExecutionContext): Future[String] =
+    Fetch()
+      .addDependencies(dependency)
+      .future()
+      .map { files =>
+        val commandResult =
           blocking {
-            os.proc("cs", "launch", "--quiet", s"$app:$version", "--", flag)
+            os.proc("java", "-cp", files.mkString(File.pathSeparator), mainClass, flag)
               .call(stderr = os.Pipe)
           }
-            .chunks
-            .map(_.merge)
-        )
-        .trim()
-    }
+        geny.ByteData.Chunks(commandResult.chunks.map(_.merge)).trim()
+      }
 
-  def run(version: String, flag: String)(implicit ec: ExecutionContext): Future[String] =
+  def run(version: String, flag: String)(implicit ec: ExecutionContext): Future[String] = {
     run(
-      if (version.split('.').head.toInt < 3) "scalac" else "scala3-compiler",
-      version,
-      flag
+      dependency =
+        Dependency(
+          Module(
+            Organization("org.scala-lang"),
+            ModuleName(if (version.split('.').head.toInt < 3) "scala-compiler" else s"scala3-compiler_$version"),
+            Map.empty
+          ),
+          version
+        ),
+      mainClass = if (version.split('.').head.toInt < 3) "scala.tools.nsc.Main" else "dotty.tools.dotc.Main",
+      flag = flag
     )
+  }
 
   val helpFlags = Set("-help", "-X", "-Y")
   val helpFlags213 = helpFlags + "-V" + "-W"
