@@ -13,6 +13,8 @@ There is also a helper method to supply different options depending on the versi
 `ScalacOptions.all` takes a version string, and any number of `VersionOptionsFunction`s,
 for which you can simply supply a function from a version trait to a `List[String]`. See the example below.
 
+This library can be used in SBT, Mill, or anywhere else. It does not depend on anything from either.
+
 
 ## Example usage
 
@@ -25,10 +27,16 @@ libraryDependencies += "io.github.nafg.scalac-options" %% "scalac-options" % "0.
 import _root_.io.github.nafg.scalacoptions._
 
 ThisBuild / scalacOptions ++=
+  // Use all of the options we supply that are applicable to the current version
   ScalacOptions.all(scalaVersion.value)(
+    // These are available in all scala versions (hence "Common")
     (opts: options.Common) => opts.deprecation ++ opts.unchecked ++ opts.feature,
+    // For 2.13.x, pass -Xlint:_
     (_: options.V2_13).Xlint("_"),
+    // For 2.13.4+, pass -YtastyReader
     (_: options.V2_13_4_+).YtastyReader,
+    // Where applicable, silence warnings in the lint-byname-implicit category
+    // This will add -Wconf:cat=lint-byname-implicit:silent on 2.12.13 and 2.13.2+
     WarningsConfig(WarningsConfig.Filter.Category(WarningsConfig.Category.`lint-byname-implicit`).silent)
   )
 ```
