@@ -30,7 +30,7 @@ getOutputs := {
 
   val dir = streams.value.cacheDirectory
   for ((version, pages) <- outputs; (flag, output) <- pages)
-    IO.write(dir / version / (flag + ".txt"), output)
+    IO.write(dir / version.versionString / (flag + ".txt"), output)
 
   outputs
 }

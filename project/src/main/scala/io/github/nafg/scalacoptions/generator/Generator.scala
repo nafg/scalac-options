@@ -3,6 +3,7 @@ package io.github.nafg.scalacoptions.generator
 import sjsonnew.BasicJsonProtocol._
 import sjsonnew._
 
+import scala.collection.immutable.SortedMap
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -62,59 +63,77 @@ object Generator {
       )
   }
 
-  def prefetch = GetHelpString.fetchAll(GetHelpString.versionsAndHelpFlags.map(_._1)).map(_ => ())
+  private def versions = Versions.versions
+
+  def prefetch = GetHelpString.fetchAll(versions).map(_ => ())
 
   def getOutputs =
-    Future.traverse(GetHelpString.versionsAndHelpFlags) { case (version, flags) =>
+    Future.traverse(versions.flatMap(_.allMinors)) { version =>
       println(s"Getting output from $version")
       GetHelpString.runner(version)
         .map { runner =>
-          val res = version -> flags.toSeq.map(flag => flag -> runner(flag))
+          val res = version -> version.helpFlags.map(flag => flag -> runner(flag))
           println(s"Finished getting output from $version")
           res
         }
     }
 
-  type Outputs = Seq[(String, Seq[(String, String)])]
+  type Outputs = Seq[(Versions.Minor, Seq[(String, String)])]
 
   def parseAllOutputs(outputs: Outputs) = {
     val allSettings =
       outputs.map { case (version, pages) =>
-        println(s"Parsing settings for $version")
-        version -> parseOutputs(pages.map(_._2))
+        val settings = parseOutputs(pages.map(_._2))
+        println(s"Parsed ${settings.length} settings for $version")
+        version -> settings
       }
 
-    val groupedMajor = allSettings.groupBy(_._1.split('.').take(1))
-    val groupedMinor = allSettings.groupBy(_._1.split('.').take(2))
+    val groupedEpoch = allSettings.groupBy(_._1.epoch)
+    val groupedMajor = allSettings.groupBy(t => (t._1.epoch, t._1.major))
+    val groupedRange =
+      SortedMap.empty[Versions.Minor, Seq[(Versions.Minor, Seq[Setting])]] ++
+        groupedMajor.flatMap { case (_, settings) =>
+          settings.tails.filterNot(_.isEmpty).map(t => t.head._1 -> t)
+        }
 
     val commonAll = common(allSettings.map(_._2))
+    val commonEpoch = groupedEpoch.mapValues(settings => common(settings.map(_._2)))
     val commonMajor = groupedMajor.mapValues(settings => common(settings.map(_._2)))
-    val commonMinor = groupedMinor.mapValues(settings => common(settings.map(_._2)))
+    val commonRange = groupedRange.mapValues(settings => common(settings.map(_._2)))
+    println(s"All: ${commonAll.length} common settings")
+    for ((v, s) <- commonEpoch) println(s"$v: ${s.length} common settings")
+    for (((e, m), s) <- commonMajor) println(s"$e.$m: ${s.length} common settings")
+    for ((v, s) <- commonRange) println(s"${v.versionString}+ ${s.length} common settings")
 
     val commonContainer = Container("Common", None, commonAll, isConcrete = false)
-    val majorContainers =
-      commonMajor
-        .map { case (major, settings) =>
-          major.toList -> Container("V" + major.mkString("_"), Some(commonContainer), settings, isConcrete = false)
-        }
-    val minorContainers =
-      commonMinor
-        .map { case (minor, settings) =>
-          val parent = majorContainers.get(minor.take(1).toList)
-          minor.toList -> Container("V" + minor.mkString("_"), parent, settings, isConcrete = false)
-        }
-    val concreteContainers =
-      allSettings
-        .map { case (version, settings) =>
-          val parent = minorContainers.get(version.split('.').take(2).toList)
-          version -> Container("V" + version.replaceAll("[.-]", "_"), parent, settings, isConcrete = true)
-        }
-        .toMap
+    val epochContainers = commonEpoch.transform { (epoch, settings) =>
+      Container(s"V$epoch", Some(commonContainer), settings, isConcrete = false)
+    }
+    val majorContainers = commonMajor.transform { case ((epoch, major), settings) =>
+      val parent = epochContainers(epoch)
+      Container(s"V${epoch}_$major", Some(parent), settings, isConcrete = false)
+    }
+    val rangeContainers = commonRange.foldLeft(Map.empty[Versions.Minor, Container]) {
+      case (map, (version @ Versions.Minor(epoch, major, minor, _, _), settings)) =>
+        val parent = map.getOrElse(version.copy(minor = minor - 1), majorContainers((epoch, major)))
+        val name = s"V${epoch}_${major}_$minor" + version.prereleaseString.fold("")("_" + _) + "_+"
+        map + (version -> Container(name, Some(parent), settings, isConcrete = false))
+    }
+    val concreteContainers = allSettings.toMap.transform {
+      case (version@Versions.Minor(epoch, major, minor, _, _), settings) =>
+        val parent = rangeContainers(version)
+        val name = s"V${epoch}_${major}_$minor" + version.prereleaseString.fold("")("_" + _)
+        Container(name, Some(parent), settings, isConcrete = true)
+    }
 
     Result(
       allContainers =
-        List(commonContainer) ++ majorContainers.values ++ minorContainers.values ++ concreteContainers.values,
-      versionMap = concreteContainers.mapValues(_.name)
+        List(commonContainer) ++
+          epochContainers.values ++
+          majorContainers.values ++
+          rangeContainers.values ++
+          concreteContainers.values,
+      versionMap = concreteContainers.map { case (version, container) => (version.versionString, container.name) }
     )
   }
 }
