@@ -24,6 +24,7 @@ libraryDependencies += "io.github.nafg.scalac-options" %% "scalac-options" % "0.
 ```
 ### `build.sbt`
 ```scala
+// In build.sbt, _root_ is necessary because `sbt.io` is imported into the namespace already
 import _root_.io.github.nafg.scalacoptions._
 
 ThisBuild / scalacOptions ++=
