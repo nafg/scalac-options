@@ -10,6 +10,8 @@ ThisBuild / scalacOptions += "-deprecation"
 
 ThisBuild / organization := "io.github.nafg.scalac-options"
 
+ThisBuild / versionScheme := Some("early-semver")
+
 val downloadScalaCompilerJars = taskKey[Unit]("Download all scala compiler jars")
 downloadScalaCompilerJars := {
   streams.value.log.info("Downloading all scala compiler jars...")
