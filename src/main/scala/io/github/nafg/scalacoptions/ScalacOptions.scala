@@ -10,4 +10,7 @@ object ScalacOptions extends ScalacOptionsBase {
       pf.applyOrElse[options.Common, List[String]](opts, _ => Nil)
     }
   }
+
+  def all(versionString: String)(optionsFunctions: VersionOptionsFunction*) =
+    allMatching(versionString)(optionsFunctions.map(_.toPartialFunction): _*)
 }
