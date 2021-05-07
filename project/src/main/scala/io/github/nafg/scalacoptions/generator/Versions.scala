@@ -56,7 +56,9 @@ object Versions {
       ),
       Epoch(
         epoch = 3,
-        majors = List(Major(3, 0, List(Minor(3, 0, 0, Some("RC" -> 2), commonHelpFlags))))
+        majors = List(
+          Major(3, 0, (1 to 3).map(rc => Minor(3, 0, 0, Some("RC" -> rc), commonHelpFlags)))
+        )
       )
     )
 }
