@@ -114,8 +114,11 @@ object Generator {
       Container(s"V${epoch}_$major", Some(parent), settings, isConcrete = false)
     }
     val rangeContainers = commonRange.foldLeft(Map.empty[Versions.Minor, Container]) {
-      case (map, (version @ Versions.Minor(epoch, major, minor, _, _), settings)) =>
-        val parent = map.getOrElse(version.copy(minor = minor - 1), majorContainers((epoch, major)))
+      case (map, (version @ Versions.Minor(epoch, major, minor, prerelease, _), settings)) =>
+        val parent =
+          prerelease.flatMap{ case (alpha, num) => map.get(version.copy(prerelease = Some((alpha, num - 1)))) }
+            .orElse(map.get(version.copy(minor = minor - 1)))
+            .getOrElse(majorContainers((epoch, major)))
         val name = s"V${epoch}_${major}_$minor" + version.prereleaseString.fold("")("_" + _) + "_+"
         map + (version -> Container(name, Some(parent), settings, isConcrete = false))
     }
