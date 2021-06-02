@@ -73,3 +73,5 @@ Compile / sourceGenerators += generate
 
 Compile / packageSrc / mappings ++=
   generate.value.pair(Path.relativeTo((Compile / sourceManaged).value) | Path.flat)
+
+libraryDependencies += "io.get-coursier" %% "coursier-core" % "2.0.16"
