@@ -56,8 +56,10 @@ generate := {
     IO.write(file,
       s"""package io.github.nafg.scalacoptions
          |
+         |import scala.collection.immutable.ListMap
+         |
          |trait ScalacOptionsBase {
-         |  val versionMap = Map(
+         |  val versionMap = ListMap(
          |${result.versionMap.map { case (version, name) => s"""    "$version" -> options.$name""" }.mkString(",\n")}
          |  )
          |}

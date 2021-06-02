@@ -3,7 +3,7 @@ package io.github.nafg.scalacoptions.generator
 import sjsonnew.BasicJsonProtocol._
 import sjsonnew._
 
-import scala.collection.immutable.SortedMap
+import scala.collection.immutable.{ListMap, SortedMap}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -51,10 +51,17 @@ object Generator {
       .toSeq
       .sortBy(_.name)(Ordering.comparatorToOrdering(String.CASE_INSENSITIVE_ORDER))
 
-  case class Result(allContainers: Seq[Container], versionMap: Map[String, String])
+  case class Result(allContainers: Seq[Container], versionMap: ListMap[String, String])
 
   object Result {
-    implicit val resultLListIso: IsoLList.Aux[Result, Seq[Container] :*: Map[String, String] :*: LNil] =
+    implicit def listMapFormat[K, V](implicit seqFormat: JsonFormat[Seq[(K, V)]]): JsonFormat[ListMap[K, V]] =
+      new JsonFormat[ListMap[K, V]] {
+        override def write[J](obj: ListMap[K, V], builder: Builder[J]): Unit = seqFormat.write(obj.toSeq, builder)
+        override def read[J](jsOpt: Option[J], unbuilder: Unbuilder[J]): ListMap[K, V] =
+          ListMap(seqFormat.read(jsOpt, unbuilder): _*)
+      }
+
+    implicit val resultLListIso: IsoLList.Aux[Result, Seq[Container] :*: ListMap[String, String] :*: LNil] =
       LList.iso(
         { case Result(allContainers, versionMap) =>
           ("allContainers" -> allContainers) :*: ("versionMap" -> versionMap) :*: LNil
@@ -116,14 +123,14 @@ object Generator {
     val rangeContainers = commonRange.foldLeft(Map.empty[Versions.Minor, Container]) {
       case (map, (version @ Versions.Minor(epoch, major, minor, prerelease, _), settings)) =>
         val parent =
-          prerelease.flatMap{ case (alpha, num) => map.get(version.copy(prerelease = Some((alpha, num - 1)))) }
+          prerelease.flatMap { case (alpha, num) => map.get(version.copy(prerelease = Some((alpha, num - 1)))) }
             .orElse(map.get(version.copy(minor = minor - 1)))
             .getOrElse(majorContainers((epoch, major)))
         val name = s"V${epoch}_${major}_$minor" + version.prereleaseString.fold("")("_" + _) + "_+"
         map + (version -> Container(name, Some(parent), settings, isConcrete = false))
     }
-    val concreteContainers = allSettings.toMap.transform {
-      case (version@Versions.Minor(epoch, major, minor, _, _), settings) =>
+    val concreteContainers = ListMap(allSettings: _*).transform {
+      case (version @ Versions.Minor(epoch, major, minor, _, _), settings) =>
         val parent = rangeContainers(version)
         val name = s"V${epoch}_${major}_$minor" + version.prereleaseString.fold("")("_" + _)
         Container(name, Some(parent), settings, isConcrete = true)
