@@ -20,7 +20,7 @@ This library can be used in SBT, Mill, or anywhere else. It does not depend on a
 
 ### `project/plugins.sbt`
 ```scala
-libraryDependencies += "io.github.nafg.scalac-options" %% "scalac-options" % "0.1.4"
+libraryDependencies += "io.github.nafg.scalac-options" %% "scalac-options" % "0.1.5"
 ```
 ### `build.sbt`
 ```scala
