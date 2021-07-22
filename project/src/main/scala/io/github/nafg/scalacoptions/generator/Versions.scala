@@ -60,8 +60,8 @@ object Versions {
           Major(
             3,
             0,
-            (1 to 3).map(rc => Minor(3, 0, 0, Some("RC" -> rc), commonHelpFlags)) :+
-              Minor(3, 0, 0, None, commonHelpFlags)
+            (1 to 3).map(rc => Minor(3, 0, 0, Some("RC" -> rc), commonHelpFlags)) ++
+              (0 to 1).map(Minor(3, 0, _, None, commonHelpFlags))
           )
         )
       )
