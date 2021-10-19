@@ -5,7 +5,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 
-ThisBuild / scalaVersion := "2.12.13"
+ThisBuild / scalaVersion := "2.12.15"
 ThisBuild / scalacOptions += "-deprecation"
 
 ThisBuild / organization := "io.github.nafg.scalac-options"
