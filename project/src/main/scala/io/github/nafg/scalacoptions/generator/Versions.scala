@@ -61,8 +61,9 @@ object Versions {
             3,
             0,
             (1 to 3).map(rc => Minor(3, 0, 0, Some("RC" -> rc), commonHelpFlags)) ++
-              (0 to 1).map(Minor(3, 0, _, None, commonHelpFlags))
-          )
+              (0 to 2).map(Minor(3, 0, _, None, commonHelpFlags))
+          ),
+          Major(3, 1, Seq(Minor(3, 1, 0, None, commonHelpFlags :+ "-W")))
         )
       )
     )
