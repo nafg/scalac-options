@@ -2,14 +2,16 @@ package io.github.nafg.scalacoptions.generator
 
 import scala.meta._
 
-
 object CodeGen {
   def makeDef(setting: Setting, isOverride: Boolean): String = {
     val params = setting.flagSegments.toList.collect {
       case FlagSegment.Parameter(name) => name
     }
     val elems = {
-      case class State(finished: List[List[FlagSegment]], current: List[FlagSegment])
+      case class State(
+          finished: List[List[FlagSegment]],
+          current: List[FlagSegment]
+      )
       val result =
         setting.flagSegments.foldLeft(State(Nil, Nil)) {
           case (State(finished, current), segment) =>
@@ -20,7 +22,7 @@ object CodeGen {
                     finished :+ (current :+ FlagSegment.Literal(text.trim)),
                   current = Nil
                 )
-              case segment                                         =>
+              case segment =>
                 State(finished = finished, current = current :+ segment)
             }
         }
@@ -55,7 +57,8 @@ object CodeGen {
     val overrideMods = if (!isOverride) Nil else List(Mod.Override())
 
     val comment =
-      if (setting.description.trim.isEmpty) "" else
+      if (setting.description.trim.isEmpty) ""
+      else
         "  /**\n" +
           setting.description.linesWithSeparators
             .map("   * " + _.replace("\\u", "\\\\u"))
