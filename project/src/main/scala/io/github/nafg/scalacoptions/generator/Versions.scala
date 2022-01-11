@@ -3,16 +3,11 @@ package io.github.nafg.scalacoptions.generator
 import sjsonnew.BasicJsonProtocol._
 import sjsonnew.{:*:, IsoLList, LList, LNil}
 
+
 object Versions {
   val commonHelpFlags = Seq("-help", "-X", "-Y")
 
-  case class Minor(
-      epoch: Int,
-      major: Int,
-      minor: Int,
-      prerelease: Option[(String, Int)],
-      helpFlags: Seq[String]
-  ) {
+  case class Minor(epoch: Int, major: Int, minor: Int, prerelease: Option[(String, Int)], helpFlags: Seq[String]) {
     lazy val prereleaseString = prerelease.map { case (let, num) => let + num }
     lazy val versionString =
       s"$epoch.$major.$minor" + prereleaseString.fold("")("-" + _)

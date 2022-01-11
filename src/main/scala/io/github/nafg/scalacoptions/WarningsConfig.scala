@@ -4,6 +4,7 @@ import scala.languageFeature.experimental.macros
 import scala.languageFeature.{dynamics, existentials}
 import scala.util.matching.Regex
 
+
 object WarningsConfig {
   sealed trait Category
 
@@ -221,14 +222,10 @@ object WarningsConfig {
   def buildString(filterAndActions: FilterAndAction*): String =
     filterAndActions.mkString(",")
 
-  def apply(o: options.V2_13_2_+)(
-      filterAndActions: FilterAndAction*
-  ): List[String] =
+  def apply(o: options.V2_13_2_+)(filterAndActions: FilterAndAction*): List[String] =
     o.Wconf(buildString(filterAndActions: _*))
 
-  def apply(o: options.V2_12_13_+)(
-      filterAndActions: FilterAndAction*
-  ): List[String] =
+  def apply(o: options.V2_12_13_+)(filterAndActions: FilterAndAction*): List[String] =
     o.Wconf(buildString(filterAndActions: _*))
 
   def apply(filterAndActions: FilterAndAction*): VersionOptionsFunction =

@@ -1,18 +1,10 @@
 package io.github.nafg.scalacoptions.generator
 
-import sjsonnew.BasicJsonProtocol.{
-  BooleanJsonFormat,
-  StringJsonFormat,
-  seqFormat
-}
+import sjsonnew.BasicJsonProtocol.{BooleanJsonFormat, StringJsonFormat, seqFormat}
 import sjsonnew.{:*:, IsoLList, LList, LNil}
 
-case class Setting(
-    name: String,
-    flagSegments: Seq[FlagSegment],
-    description: String,
-    isDeprecated: Boolean = false
-) {
+
+case class Setting(name: String, flagSegments: Seq[FlagSegment], description: String, isDeprecated: Boolean = false) {
   def mergeLiteralSegments =
     copy(flagSegments = flagSegments.foldRight(List.empty[FlagSegment]) {
       case (

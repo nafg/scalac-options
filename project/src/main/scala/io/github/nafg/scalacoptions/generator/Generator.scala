@@ -7,6 +7,7 @@ import scala.collection.immutable.{ListMap, SortedMap}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
+
 object Generator {
   lazy val parser = FastParseParser
 
@@ -60,22 +61,16 @@ object Generator {
         Ordering.comparatorToOrdering(String.CASE_INSENSITIVE_ORDER)
       )
 
-  case class Result(
-      allContainers: Seq[Container],
-      versionMap: ListMap[String, String]
-  )
+  case class Result(allContainers: Seq[Container], versionMap: ListMap[String, String])
 
   object Result {
-    implicit def listMapFormat[K, V](implicit
-        seqFormat: JsonFormat[Seq[(K, V)]]
-    ): JsonFormat[ListMap[K, V]] =
+    implicit def listMapFormat[K, V](
+      implicit
+      seqFormat: JsonFormat[Seq[(K, V)]]): JsonFormat[ListMap[K, V]] =
       new JsonFormat[ListMap[K, V]] {
         override def write[J](obj: ListMap[K, V], builder: Builder[J]): Unit =
           seqFormat.write(obj.toSeq, builder)
-        override def read[J](
-            jsOpt: Option[J],
-            unbuilder: Unbuilder[J]
-        ): ListMap[K, V] =
+        override def read[J](jsOpt: Option[J], unbuilder: Unbuilder[J]): ListMap[K, V] =
           ListMap(seqFormat.read(jsOpt, unbuilder): _*)
       }
 

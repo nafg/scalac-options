@@ -14,8 +14,7 @@ inThisBuild(
     ),
     dynverGitDescribeOutput ~= (_.map(o =>
       o.copy(dirtySuffix = sbtdynver.GitDirtySuffix(""))
-    )
-    ),
+    )),
     dynverSonatypeSnapshots := true,
     githubWorkflowTargetTags ++= Seq("v*"),
     githubWorkflowPublishTargetBranches := Seq(

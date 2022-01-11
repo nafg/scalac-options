@@ -6,6 +6,7 @@ import pprint.pprintln
 
 import scala.io.AnsiColor
 
+
 object FastParseParser {
   private def spaces[_: P] = P(" ".rep)
 
@@ -124,7 +125,7 @@ object FastParseParser {
           pprintln(remaining)
         }
         all
-      case failure: Parsed.Failure =>
+      case failure: Parsed.Failure       =>
         Console.err.println(
           failure.trace(enableLogging = true).longAggregateMsg
         )

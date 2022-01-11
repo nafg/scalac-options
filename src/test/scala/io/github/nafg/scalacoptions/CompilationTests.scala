@@ -2,6 +2,7 @@ package io.github.nafg.scalacoptions
 
 import io.github.nafg.scalacoptions.WarningsConfig.{Category, Filter}
 
+
 object CompilationTests {
   ScalacOptions.all("")(
     (opts: options.Common) =>
