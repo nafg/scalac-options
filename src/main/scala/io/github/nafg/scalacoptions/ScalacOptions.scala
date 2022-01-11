@@ -6,9 +6,7 @@ import scala.collection.immutable.SortedMap
 
 
 object ScalacOptions extends ScalacOptionsBase {
-  lazy val sortedVersionMap = SortedMap(versionMap.toSeq.map { case (k, v) =>
-    new Version(k) -> v
-  }: _*)
+  lazy val sortedVersionMap = SortedMap(versionMap.toSeq.map { case (k, v) => new Version(k) -> v }: _*)
 
   def apply(versionString: String): options.Common =
     sortedVersionMap.to(new Version(versionString)).last._2

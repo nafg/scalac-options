@@ -16,9 +16,10 @@ object Versions {
   }
 
   object Minor {
-    implicit val minorLListIso: IsoLList.Aux[Minor, (Int, Int, Int) :*: Option[
-      (String, Int)
-    ] :*: Seq[String] :*: LNil] =
+    implicit val minorLListIso: IsoLList.Aux[
+      Minor,
+      (Int, Int, Int) :*: Option[(String, Int)] :*: Seq[String] :*: LNil
+    ] =
       LList.iso(
         { case Minor(epoch, major, minor, prerelease, helpFlags) =>
           "version" -> (epoch, major, minor) :*:
@@ -26,12 +27,8 @@ object Versions {
             "helpFlags" -> helpFlags :*:
             LNil
         },
-        {
-          case (_, (epoch, major, minor)) :*: (_, prerelease) :*: (
-                _,
-                helpFlags
-              ) :*: LNil =>
-            Minor(epoch, major, minor, prerelease, helpFlags)
+        { case (_, (epoch, major, minor)) :*: (_, prerelease) :*: (_, helpFlags) :*: LNil =>
+          Minor(epoch, major, minor, prerelease, helpFlags)
         }
       )
 
@@ -54,11 +51,7 @@ object Versions {
         majors = List(
           Major(2, 11, (0 to 12).map(Minor(2, 11, _, None, commonHelpFlags))),
           Major(2, 12, (0 to 14).map(Minor(2, 12, _, None, commonHelpFlags))),
-          Major(
-            2,
-            13,
-            (0 to 6).map(Minor(2, 13, _, None, commonHelpFlags :+ "-V" :+ "-W"))
-          )
+          Major(2, 13, (0 to 6).map(Minor(2, 13, _, None, commonHelpFlags :+ "-V" :+ "-W")))
         )
       ),
       Epoch(
@@ -67,9 +60,7 @@ object Versions {
           Major(
             3,
             0,
-            (1 to 3).map(rc =>
-              Minor(3, 0, 0, Some("RC" -> rc), commonHelpFlags)
-            ) ++
+            (1 to 3).map(rc => Minor(3, 0, 0, Some("RC" -> rc), commonHelpFlags)) ++
               (0 to 2).map(Minor(3, 0, _, None, commonHelpFlags))
           ),
           Major(3, 1, Seq(Minor(3, 1, 0, None, commonHelpFlags :+ "-W")))

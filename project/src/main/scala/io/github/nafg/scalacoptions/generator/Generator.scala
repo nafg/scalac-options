@@ -74,9 +74,7 @@ object Generator {
           ListMap(seqFormat.read(jsOpt, unbuilder): _*)
       }
 
-    implicit val resultLListIso: IsoLList.Aux[Result, Seq[
-      Container
-    ] :*: ListMap[String, String] :*: LNil] =
+    implicit val resultLListIso: IsoLList.Aux[Result, Seq[Container] :*: ListMap[String, String] :*: LNil] =
       LList.iso(
         { case Result(allContainers, versionMap) =>
           ("allContainers" -> allContainers) :*: ("versionMap" -> versionMap) :*: LNil
@@ -94,8 +92,7 @@ object Generator {
   def getOutputs =
     Future.traverse(versions.flatMap(_.allMinors)) { version =>
       println(s"Getting output from $version")
-      GetHelpString
-        .runner(version)
+      GetHelpString.runner(version)
         .map { runner =>
           val res =
             version -> version.helpFlags.map(flag => flag -> runner(flag))
@@ -153,13 +150,7 @@ object Generator {
     }
     val rangeContainers =
       commonRange.foldLeft(Map.empty[Versions.Minor, Container]) {
-        case (
-              map,
-              (
-                version @ Versions.Minor(epoch, major, minor, prerelease, _),
-                settings
-              )
-            ) =>
+        case (map, (version @ Versions.Minor(epoch, major, minor, prerelease, _), settings)) =>
           val parent =
             prerelease
               .flatMap { case (alpha, num) =>
@@ -168,31 +159,23 @@ object Generator {
               .orElse(map.get(version.copy(minor = minor - 1)))
               .getOrElse(majorContainers((epoch, major)))
           val name =
-            s"V${epoch}_${major}_$minor" + version.prereleaseString.fold("")(
-              "_" + _
-            ) + "_+"
-          map + (version -> Container(
-            name,
-            Some(parent),
-            settings,
-            isConcrete = false
-          ))
+            s"V${epoch}_${major}_$minor" + version.prereleaseString.fold("")("_" + _) + "_+"
+          map + (version -> Container(name, Some(parent), settings, isConcrete = false))
       }
     val concreteContainers = ListMap(allSettings: _*).transform {
       case (version @ Versions.Minor(epoch, major, minor, _, _), settings) =>
         val parent = rangeContainers(version)
-        val name = s"V${epoch}_${major}_$minor" + version.prereleaseString.fold(
-          ""
-        )("_" + _)
+        val name = s"V${epoch}_${major}_$minor" + version.prereleaseString.fold("")("_" + _)
         Container(name, Some(parent), settings, isConcrete = true)
     }
 
     Result(
-      allContainers = List(commonContainer) ++
-        epochContainers.values ++
-        majorContainers.values ++
-        rangeContainers.values ++
-        concreteContainers.values,
+      allContainers =
+        List(commonContainer) ++
+          epochContainers.values ++
+          majorContainers.values ++
+          rangeContainers.values ++
+          concreteContainers.values,
       versionMap = concreteContainers.map { case (version, container) =>
         (version.versionString, container.name)
       }

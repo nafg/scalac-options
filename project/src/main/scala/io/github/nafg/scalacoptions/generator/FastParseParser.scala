@@ -31,9 +31,7 @@ object FastParseParser {
   private def flagName[_: P]: P[Seq[FlagSegment]] = P(
     "-".!.map(FlagSegment.Literal)
       ~ (
-        CharsWhile(c => c == '-' || c == ':' || c.isLetter).!.map(
-          FlagSegment.Literal
-        ) |
+        CharsWhile(c => c == '-' || c == ':' || c.isLetter).!.map(FlagSegment.Literal) |
           placeholder.map(FlagSegment.Parameter)
       )
         .rep(1)

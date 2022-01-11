@@ -47,12 +47,8 @@ object Container {
           ("isConcrete" -> isConcrete) :*:
           LNil
       },
-      {
-        case (_, name) :*: (_, parent) :*: (_, settings) :*: (
-              _,
-              isConcrete
-            ) :*: LNil =>
-          Container(name, parent, settings, isConcrete)
+      { case (_, name) :*: (_, parent) :*: (_, settings) :*: (_, isConcrete) :*: LNil =>
+        Container(name, parent, settings, isConcrete)
       }
     )
   implicit lazy val containerFormat: JsonFormat[Container] = lazyFormat(
