@@ -51,7 +51,7 @@ object Versions {
         majors = List(
           Major(2, 11, (0 to 12).map(Minor(2, 11, _, None, commonHelpFlags))),
           Major(2, 12, (0 to 14).map(Minor(2, 12, _, None, commonHelpFlags))),
-          Major(2, 13, (0 to 6).map(Minor(2, 13, _, None, commonHelpFlags :+ "-V" :+ "-W")))
+          Major(2, 13, (0 to 8).map(Minor(2, 13, _, None, commonHelpFlags :+ "-V" :+ "-W")))
         )
       ),
       Epoch(
