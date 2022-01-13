@@ -5,7 +5,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 
-ThisBuild / crossScalaVersions := Seq("2.12.15", "2.13.7")
+ThisBuild / crossScalaVersions := Seq("2.12.15", "2.13.8")
 ThisBuild / scalaVersion := "2.12.15"
 ThisBuild / scalacOptions += "-deprecation"
 
