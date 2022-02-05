@@ -70,8 +70,8 @@ generate := {
          |trait ScalacOptionsBase {
          |  val versionMap = ListMap(
          |${result.versionMap
-        .map { case (version, name) => s"""    "$version" -> options.$name""" }
-        .mkString(",\n")}
+          .map { case (version, name) => s"""    "$version" -> options.$name""" }
+          .mkString(",\n")}
          |  )
          |}
          |""".stripMargin
