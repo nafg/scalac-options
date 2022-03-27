@@ -1,5 +1,3 @@
-package io.github.nafg.scalacoptions.generator
-
 import sbt.util.StampedFormat.lazyFormat
 import sjsonnew.BasicJsonProtocol.{BooleanJsonFormat, StringJsonFormat, isolistFormat, optionFormat, seqFormat}
 import sjsonnew._

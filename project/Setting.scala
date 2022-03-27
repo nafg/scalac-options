@@ -1,5 +1,3 @@
-package io.github.nafg.scalacoptions.generator
-
 import sjsonnew.BasicJsonProtocol.{BooleanJsonFormat, StringJsonFormat, seqFormat}
 import sjsonnew.{:*:, IsoLList, LList, LNil}
 

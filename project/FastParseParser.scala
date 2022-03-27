@@ -1,5 +1,3 @@
-package io.github.nafg.scalacoptions.generator
-
 import fastparse.NoWhitespace._
 import fastparse._
 import pprint.pprintln

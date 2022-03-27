@@ -1,5 +1,3 @@
-package io.github.nafg.scalacoptions.generator
-
 import scala.meta._
 
 

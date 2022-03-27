@@ -1,4 +1,3 @@
-import _root_.io.github.nafg.scalacoptions.generator.Generator
 import sbt.util.CacheImplicits._
 
 import scala.concurrent.Await

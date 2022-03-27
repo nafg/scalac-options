@@ -1,5 +1,3 @@
-package io.github.nafg.scalacoptions.generator
-
 import coursier.core.{Module, ModuleName, Organization}
 import coursier.{Dependency, Fetch}
 

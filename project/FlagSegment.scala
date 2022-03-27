@@ -1,5 +1,3 @@
-package io.github.nafg.scalacoptions.generator
-
 import sjsonnew.BasicJsonProtocol.{flatUnionFormat2, isoStringFormat}
 import sjsonnew.{IsoString, JsonFormat}
 

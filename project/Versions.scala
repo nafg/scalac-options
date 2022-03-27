@@ -1,5 +1,3 @@
-package io.github.nafg.scalacoptions.generator
-
 import io.circe.yaml.parser
 import sbt.io.IO
 import sbt.io.syntax.file
