@@ -12,6 +12,14 @@
   0:
     0..2:
       helpFlags: [ -help, -X, -Y ]
+      settings:
+        encoding:
+          - lit: '-encoding '
+          - param: encoding
   1:
     0..1:
       helpFlags: [ -help, -W, -X, -Y ]
+      settings:
+        encoding:
+          - lit: '-encoding '
+          - param: encoding
