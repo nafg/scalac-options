@@ -43,7 +43,7 @@ object Versions {
     def allMinors = majors.flatMap(_.minors)
   }
 
-  val versions = {
+  def versions = {
     val json =
       parser.parse(IO.read(file("versions.yaml")))
         .toTry.get
