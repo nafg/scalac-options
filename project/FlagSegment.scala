@@ -1,3 +1,5 @@
+import io.circe.derivation.deriveCodec
+import io.circe.{Codec, Encoder}
 import sjsonnew.BasicJsonProtocol.{flatUnionFormat2, isoStringFormat}
 import sjsonnew.{IsoString, JsonFormat}
 
@@ -15,4 +17,23 @@ object FlagSegment {
     IsoString.iso(_.name, Parameter)
   implicit val flagSegmentFormat: JsonFormat[FlagSegment] =
     flatUnionFormat2[FlagSegment, Literal, Parameter]
+
+  implicit val codecLiteral: Codec[Literal] =
+    deriveCodec {
+      case "text" => "lit"
+      case s      => s
+    }
+
+  implicit val codecParameter: Codec[Parameter] = deriveCodec {
+    case "name" => "param"
+    case s      => s
+  }
+
+  implicit val codec: Codec[FlagSegment] = Codec.from(
+    codecLiteral.or(codecParameter.map(identity)),
+    Encoder.instance {
+      case literal: Literal     => codecLiteral(literal)
+      case parameter: Parameter => codecParameter(parameter)
+    }
+  )
 }

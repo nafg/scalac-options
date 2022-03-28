@@ -12,9 +12,9 @@ object GetHelpString {
         Organization("org.scala-lang"),
         ModuleName(
           version match {
-            case Versions.Minor(2, _, _, _, _)       => "scala-compiler"
-            case Versions.Minor(3, _, _, Some(_), _) => s"scala3-compiler_${version.versionString}"
-            case Versions.Minor(3, _, _, None, _)    => "scala3-compiler_3"
+            case Versions.Minor(2, _, _, _, _, _)       => "scala-compiler"
+            case Versions.Minor(3, _, _, Some(_), _, _) => s"scala3-compiler_${version.versionString}"
+            case Versions.Minor(3, _, _, None, _, _)    => "scala3-compiler_3"
           }
         ),
         Map.empty

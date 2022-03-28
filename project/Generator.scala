@@ -104,7 +104,14 @@ object Generator {
   def parseAllOutputs(outputs: Outputs) = {
     val allSettings =
       outputs.map { case (version, pages) =>
-        val settings = parseOutputs(pages.map(_._2))
+        val settings =
+          parseOutputs(pages.map(_._2))
+            .map { s =>
+              version.settings.get(s.name) match {
+                case None           => s
+                case Some(segments) => s.copy(flagSegments = segments)
+              }
+            }
         println(s"Parsed ${settings.length} settings for $version")
         version -> settings
       }
@@ -148,7 +155,7 @@ object Generator {
     }
     val rangeContainers =
       commonRange.foldLeft(Map.empty[Versions.Minor, Container]) {
-        case (map, (version @ Versions.Minor(epoch, major, minor, prerelease, _), settings)) =>
+        case (map, (version @ Versions.Minor(epoch, major, minor, prerelease, _, _), settings)) =>
           val parent =
             prerelease
               .flatMap { case (alpha, num) =>
@@ -161,7 +168,7 @@ object Generator {
           map + (version -> Container(name, Some(parent), settings, isConcrete = false))
       }
     val concreteContainers = ListMap(allSettings: _*).transform {
-      case (version @ Versions.Minor(epoch, major, minor, _, _), settings) =>
+      case (version @ Versions.Minor(epoch, major, minor, _, _, _), settings) =>
         val parent = rangeContainers(version)
         val name = s"V${epoch}_${major}_$minor" + version.prereleaseString.fold("")("_" + _)
         Container(name, Some(parent), settings, isConcrete = true)
