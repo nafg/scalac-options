@@ -106,6 +106,10 @@ object FastParseParser {
     }
   }
 
+  /**
+   * @param text output of scalac help output
+   * @return a Map of section descriptions to settings within them
+   */
   def parse(text: String): Map[String, Seq[Setting]] =
     fastparse.parse(text, parser(_), verboseFailures = true) match {
       case Parsed.Success(groups, index) =>
