@@ -1,3 +1,6 @@
+import _root_.io.github.nafg.mergify.dsl._
+
+
 inThisBuild(
   List(
     homepage := Some(url("https://github.com/nafg/scalac-options")),
@@ -35,3 +38,8 @@ inThisBuild(
 )
 
 sonatypeProfileName := "io.github.nafg"
+
+mergifyExtraConditions := Seq(
+  (Attr.Author :== "scala-steward") ||
+    (Attr.Author :== "nafg-scala-steward[bot]")
+)
