@@ -1,4 +1,5 @@
-import io.circe.derivation.deriveCodec
+import io.circe.generic.extras.Configuration
+import io.circe.generic.extras.semiauto.deriveConfiguredCodec
 import io.circe.{Codec, Encoder}
 import sjsonnew.BasicJsonProtocol.{flatUnionFormat2, isoStringFormat}
 import sjsonnew.{IsoString, JsonFormat}
@@ -18,15 +19,17 @@ object FlagSegment {
   implicit val flagSegmentFormat: JsonFormat[FlagSegment] =
     flatUnionFormat2[FlagSegment, Literal, Parameter]
 
-  implicit val codecLiteral: Codec[Literal] =
-    deriveCodec {
-      case "text" => "lit"
-      case s      => s
-    }
+  private def renamingConfig(f: PartialFunction[String, String]) =
+    Configuration.default.copy(transformMemberNames = f.orElse { case s => s })
 
-  implicit val codecParameter: Codec[Parameter] = deriveCodec {
-    case "name" => "param"
-    case s      => s
+  implicit val codecLiteral: Codec[Literal] = {
+    implicit val config = renamingConfig { case "text" => "lit" }
+    deriveConfiguredCodec
+  }
+
+  implicit val codecParameter: Codec[Parameter] = {
+    implicit val config = renamingConfig { case "name" => "param" }
+    deriveConfiguredCodec
   }
 
   implicit val codec: Codec[FlagSegment] = Codec.from(

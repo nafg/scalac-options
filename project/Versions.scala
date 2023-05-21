@@ -1,13 +1,14 @@
 import cats.data
 import io.circe.Decoder
-import io.circe.derivation.deriveDecoder
+import io.circe.generic.semiauto.deriveDecoder
 import io.circe.yaml.parser
 import sbt.io.IO
 import sbt.io.syntax.file
-import sjsonnew.BasicJsonProtocol._
+import sjsonnew.BasicJsonProtocol.*
 import sjsonnew.{:*:, IsoLList, LList, LNil}
-
 import scala.collection.immutable.SortedMap
+
+import io.circe.generic.extras.{Configuration, semiauto}
 
 
 object Versions {
@@ -57,7 +58,8 @@ object Versions {
 
   case class VersionConfig(helpFlags: Seq[String], settings: Map[String, Seq[FlagSegment]] = Map.empty)
   object VersionConfig {
-    implicit val decoder: Decoder[VersionConfig] = deriveDecoder
+    private implicit val config = Configuration.default.withDefaults
+    implicit val decoder: Decoder[VersionConfig] = semiauto.deriveConfiguredDecoder
   }
   type VersionFile = SortedMap[Int, SortedMap[Int, Map[String, VersionConfig]]]
 
@@ -77,7 +79,7 @@ object Versions {
               major = major,
               minors =
                 for {
-                  (regex(minorFirst, minorLast), config) <- data.toSeq
+                  case (regex(minorFirst, minorLast), config) <- data.toSeq
                   minor <- minorFirst.toInt to minorLast.toInt
                 } yield Minor(
                   epoch = epoch,
