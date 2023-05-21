@@ -86,4 +86,4 @@ Compile / packageSrc / mappings ++=
     Path.relativeTo((Compile / sourceManaged).value) | Path.flat
   )
 
-libraryDependencies += "io.get-coursier" %% "coursier-core" % "2.1.3"
+libraryDependencies += "io.get-coursier" %% "coursier-core" % "2.1.4"
