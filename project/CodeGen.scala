@@ -1,4 +1,4 @@
-import scala.meta._
+import scala.meta.*
 
 
 object CodeGen {
@@ -26,7 +26,7 @@ object CodeGen {
     }
 
     def plusTerms(terms: Seq[Term]) = terms.reduceLeft((a, b) =>
-      Term.ApplyInfix(a, Term.Name("+"), Nil, List(b))
+      Term.ApplyInfix(a, Term.Name("+"), Type.ArgClause(Nil), Term.ArgClause(List(b)))
     )
 
     def option(segments: Seq[FlagSegment]) = plusTerms(segments.map {
@@ -35,7 +35,7 @@ object CodeGen {
     })
 
     def options(segments: List[Seq[FlagSegment]]) =
-      Term.Apply(Term.Name("List"), segments.map(option))
+      Term.Apply(Term.Name("List"), Term.ArgClause(segments.map(option)))
 
     val deprecatedMods =
       if (!setting.isDeprecated) Nil
@@ -45,7 +45,7 @@ object CodeGen {
             Init(
               Type.Name("deprecated"),
               Name.Anonymous(),
-              List(List(Lit.String("See doc comment"), Lit.String("")))
+              List(Term.ArgClause(List(Lit.String("See doc comment"), Lit.String(""))))
             )
           )
         )
@@ -65,21 +65,27 @@ object CodeGen {
         .Def(
           mods = deprecatedMods ++ overrideMods,
           name = Term.Name(setting.name),
-          tparams = Nil,
-          paramss =
-            if (params.isEmpty)
-              Nil
-            else
-              List(
-                params.map(name =>
-                  Term.Param(
-                    Nil,
-                    Term.Name(name),
-                    Some(Type.Name("String")),
-                    None
+          paramClauseGroups = List(
+            Member.ParamClauseGroup(
+              tparamClause = Type.ParamClause(Nil),
+              paramClauses =
+                if (params.isEmpty)
+                  Nil
+                else
+                  List(
+                    Term.ParamClause(
+                      params.map { name =>
+                        Term.Param(
+                          Nil,
+                          Term.Name(name),
+                          Some(Type.Name("String")),
+                          None
+                        )
+                      }
+                    )
                   )
-                )
-              ),
+            )
+          ),
           decltpe = None,
           body = options(elems)
         )
