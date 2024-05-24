@@ -17,7 +17,7 @@ object FastParseParser {
 
   private def untilLineEnd[_: P] = P(CharsWhile(_ != '\n', 0).! ~ lineEnd)
 
-  private def extraLines[_: P] = P((" ".rep(10) ~ spaces ~ untilLineEnd).rep)
+  private def extraLines[_: P] = P((" ".rep(10) ~ spaces ~ !"-" ~ untilLineEnd).rep)
 
   private def letters[_: P] = P(CharsWhile(_.isLetter))
 
@@ -106,13 +106,16 @@ object FastParseParser {
     }
   }
 
+  private val ansiRegex = "\u001B\\[[;\\d]*m".r
+
   /** @param text
     *   output of scalac help output
     * @return
     *   a Map of section descriptions to settings within them
     */
-  def parse(text: String): Map[String, Seq[Setting]] =
-    fastparse.parse(text, parser(_), verboseFailures = true) match {
+  def parse(text: String): Map[String, Seq[Setting]] = {
+    val textWithoutANSI = ansiRegex.replaceAllIn(text, "")
+    fastparse.parse(textWithoutANSI, parser(_), verboseFailures = true) match {
       case Parsed.Success(groups, index) =>
         val asMap = groups.toMap.map { case (name, settings) =>
           if (name.trim == "Deprecated settings:")
@@ -133,4 +136,5 @@ object FastParseParser {
         printFailureLocation(text, failure.index)
         throw new Exception(s"Parse Error, ${failure.msg}")
     }
+  }
 }
