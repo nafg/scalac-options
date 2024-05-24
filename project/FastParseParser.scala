@@ -17,7 +17,7 @@ object FastParseParser {
 
   private def untilLineEnd[_: P] = P(CharsWhile(_ != '\n', 0).! ~ lineEnd)
 
-  private def extraLines[_: P] = P((" ".rep(10) ~ spaces ~ untilLineEnd).rep)
+  private def extraLines[_: P] = P((" ".rep(10) ~ spaces ~ !"-" ~ untilLineEnd).rep)
 
   private def letters[_: P] = P(CharsWhile(_.isLetter))
 
