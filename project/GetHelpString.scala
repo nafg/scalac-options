@@ -46,7 +46,7 @@ object GetHelpString {
                   files.mkString(File.pathSeparator),
                   mainClass,
                   flag
-                ).call(stderr = os.Pipe)
+                ).call(stderr = os.Pipe, env = Map("COLUMNS" -> "20000"))
               }
             geny.ByteData.Chunks(commandResult.chunks.map(_.merge)).trim()
           }
