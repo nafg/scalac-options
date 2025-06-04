@@ -38,8 +38,6 @@ inThisBuild(
   )
 )
 
-sonatypeProfileName := "io.github.nafg"
-
 mergifyExtraConditions := Seq(
   (Attr.Author :== "scala-steward") ||
     (Attr.Author :== "nafg-scala-steward[bot]")
