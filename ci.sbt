@@ -19,6 +19,7 @@ inThisBuild(
       o.copy(dirtySuffix = sbtdynver.GitDirtySuffix(""))
     )),
     dynverSonatypeSnapshots := true,
+    githubWorkflowScalaVersions := githubWorkflowScalaVersions.value.map(_.replaceFirst("\\d+$", "x")),
     githubWorkflowTargetTags ++= Seq("v*"),
     githubWorkflowPublishTargetBranches := Seq(
       RefPredicate.StartsWith(Ref.Tag("v"))
