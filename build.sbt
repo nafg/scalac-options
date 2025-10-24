@@ -4,7 +4,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 
-ThisBuild / crossScalaVersions := Seq("2.12.20", "2.13.17")
+ThisBuild / crossScalaVersions := Seq("2.12.20", "2.13.17", "3.3.7")
 ThisBuild / scalaVersion := "2.12.20"
 ThisBuild / scalacOptions += "-deprecation"
 
@@ -86,4 +86,5 @@ Compile / packageSrc / mappings ++=
     Path.relativeTo((Compile / sourceManaged).value) | Path.flat
   )
 
-libraryDependencies += "io.get-coursier" %% "coursier-core" % "2.1.24"
+libraryDependencies += ("io.get-coursier" %% "coursier-core" % "2.1.24")
+  .cross(CrossVersion.for3Use2_13)

@@ -10,6 +10,7 @@ pull_request_rules:
           - author=nafg-scala-steward[bot]
       - check-success=Build and Test (ubuntu-latest, 2.12.x, zulu@8)
       - check-success=Build and Test (ubuntu-latest, 2.13.x, zulu@8)
+      - check-success=Build and Test (ubuntu-latest, 3.3.x, zulu@8)
     actions:
         queue:
             name: default
