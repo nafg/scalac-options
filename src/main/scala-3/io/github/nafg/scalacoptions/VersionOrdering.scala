@@ -4,7 +4,7 @@ object VersionOrdering {
   private def parseVersion(v: String): Seq[Either[Int, String]] = {
     val cleaned = v.stripPrefix("v")
     // Split by . and - to handle versions like "2.13.0" and "3.0.0-RC1"
-    cleaned.split("[.-]").toSeq.map { part =>
+    cleaned.split("[.\\-]").toSeq.map { part =>
       part.toIntOption match {
         case Some(n) => Left(n)
         case None    => Right(part)

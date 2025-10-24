@@ -9,8 +9,11 @@ object ScalacOptions extends ScalacOptionsBase {
   lazy val sortedVersionMap: SortedMap[String, options.Common] = 
     SortedMap(versionMap.toSeq: _*)
 
-  def apply(versionString: String): options.Common =
-    sortedVersionMap.filter { case (k, _) => ordering.lteq(k, versionString) }.last._2
+  def apply(versionString: String): options.Common = {
+    val matchingVersions = sortedVersionMap.filter { case (k, _) => ordering.lteq(k, versionString) }
+    if (matchingVersions.isEmpty) sortedVersionMap.head._2
+    else matchingVersions.last._2
+  }
 
   def allMatching(versionString: String)(partialFunctions: PartialFunction[options.Common, List[String]]*)
     : List[String] = {
