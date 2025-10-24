@@ -1,15 +1,16 @@
 package io.github.nafg.scalacoptions
 
-import coursier.core.Version
-
 import scala.collection.immutable.SortedMap
 
 
 object ScalacOptions extends ScalacOptionsBase {
-  lazy val sortedVersionMap = SortedMap(versionMap.toSeq.map { case (k, v) => new Version(k) -> v }: _*)
+  import VersionOrdering.ordering
+  
+  lazy val sortedVersionMap: SortedMap[String, options.Common] = 
+    SortedMap(versionMap.toSeq: _*)
 
   def apply(versionString: String): options.Common =
-    sortedVersionMap.to(new Version(versionString)).last._2
+    sortedVersionMap.filter { case (k, _) => ordering.lteq(k, versionString) }.last._2
 
   def allMatching(versionString: String)(partialFunctions: PartialFunction[options.Common, List[String]]*)
     : List[String] = {
