@@ -4,8 +4,8 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 
-ThisBuild / crossScalaVersions := Seq("2.12.20", "2.13.18", "3.3.7")
-ThisBuild / scalaVersion := "2.12.20"
+ThisBuild / crossScalaVersions := Seq("2.12.21", "2.13.18", "3.3.7")
+ThisBuild / scalaVersion := "2.12.21"
 ThisBuild / scalacOptions += "-deprecation"
 
 ThisBuild / organization := "io.github.nafg.scalac-options"
