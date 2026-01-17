@@ -15,9 +15,10 @@ inThisBuild(
         url("https://github.com/nafg")
       )
     ),
-    dynverGitDescribeOutput ~= (_.map(o =>
-      o.copy(dirtySuffix = sbtdynver.GitDirtySuffix(""))
-    )),
+    dynverGitDescribeOutput ~=
+      (_.map(o =>
+        o.copy(dirtySuffix = sbtdynver.GitDirtySuffix(""))
+      )),
     dynverSonatypeSnapshots := true,
     githubWorkflowScalaVersions := githubWorkflowScalaVersions.value.map(_.replaceFirst("\\d+$", "x")),
     githubWorkflowTargetTags ++= Seq("v*"),
