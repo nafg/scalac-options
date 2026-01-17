@@ -45,8 +45,7 @@ val generate = taskKey[Seq[File]]("Generate code")
 generate := {
   val outputs = getOutputs.value
 
-  val dir =
-    (Compile / sourceManaged).value / "io" / "github" / "nafg" / "scalacoptions"
+  val dir = (Compile / sourceManaged).value / "io" / "github" / "nafg" / "scalacoptions"
   val result = Generator.parseAllOutputs(outputs)
   result.allContainers.map { c =>
     val file = dir / "options" / (c.name + ".scala")
