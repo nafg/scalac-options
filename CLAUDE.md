@@ -10,10 +10,14 @@ scalac-options is a build-tool-agnostic Scala library that provides a type-safe 
 
 - `sbt compile` - Compile the generator and generated sources
 - `sbt updateVersions` - Query Maven Central and update versions.yaml with latest Scala releases
+- `sbt updateVersionsDryRun` - Check for new versions without modifying versions.yaml
+- `sbt testVersionUpdater` - Run unit tests for the version updater
 - `sbt downloadScalaCompilerJars` - Prefetch all compiler artifacts from versions.yaml (run once after updating version list)
 - `sbt getOutputs` - Fetch and cache `scalac -help` outputs for all configured versions
 - `sbt generate` - Regenerate option case classes under `src/main/scala/io/github/nafg/scalacoptions`
 - `sbt test` - Run tests
+
+See [VERSION_UPDATER_TESTING.md](VERSION_UPDATER_TESTING.md) for detailed testing instructions.
 
 ## Architecture
 

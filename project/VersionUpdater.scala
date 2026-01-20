@@ -232,42 +232,71 @@ object VersionUpdater {
     lines.mkString("\n") + "\n"
   }
 
-  def updateVersionsFile(implicit ec: ExecutionContext): Future[Unit] = {
+  case class UpdateResult(
+    availableVersions: Seq[ScalaVersion],
+    currentRanges: Map[(Int, Int), Seq[VersionRange]],
+    availableRanges: Map[(Int, Int), Seq[VersionRange]],
+    mergedRanges: Map[(Int, Int), Seq[VersionRange]],
+    hasChanges: Boolean,
+    changes: Seq[String]
+  )
+
+  def dryRun()(implicit ec: ExecutionContext): Future[UpdateResult] = {
     for {
       available <- fetchAvailableVersions
     } yield {
-      println(s"Found ${available.size} available Scala versions")
-
       val currentRanges = readCurrentVersions()
-      println(s"Current version ranges: ${currentRanges.size} major versions")
-
       val availableRanges = groupIntoPatchRanges(available)
-      println(s"Available version ranges: ${availableRanges.size} major versions")
-
       val merged = mergeVersionRanges(currentRanges, availableRanges)
-
-      // Check if there are any changes
       val hasChanges = merged != currentRanges
 
-      if (hasChanges) {
-        val yamlContent = generateYamlContent(merged)
-        IO.write(file("versions.yaml"), yamlContent)
-        println("Updated versions.yaml with new Scala versions")
+      val changes = scala.collection.mutable.ArrayBuffer[String]()
 
-        // Show what changed
+      if (hasChanges) {
         val newKeys = merged.keySet.diff(currentRanges.keySet)
         if (newKeys.nonEmpty) {
-          println(s"New major versions added: ${newKeys.map { case (e, m) => s"$e.$m" }.mkString(", ")}")
+          changes += s"New major versions: ${newKeys.map { case (e, m) => s"$e.$m" }.mkString(", ")}"
         }
 
         merged.foreach { case (key @ (epoch, major), ranges) =>
           val oldRanges = currentRanges.getOrElse(key, Seq.empty)
           if (ranges != oldRanges) {
-            println(s"  $epoch.$major: ${ranges.mkString(", ")} (was: ${oldRanges.mkString(", ")})")
+            changes += s"  $epoch.$major: ${ranges.mkString(", ")} (was: ${oldRanges.mkString(", ")})"
           }
         }
+      }
+
+      UpdateResult(
+        availableVersions = available,
+        currentRanges = currentRanges,
+        availableRanges = availableRanges,
+        mergedRanges = merged,
+        hasChanges = hasChanges,
+        changes = changes.toSeq
+      )
+    }
+  }
+
+  def updateVersionsFile(dryRunMode: Boolean = false)(implicit ec: ExecutionContext): Future[Unit] = {
+    for {
+      result <- dryRun()
+    } yield {
+      println(s"Found ${result.availableVersions.size} available Scala versions")
+      println(s"Current version ranges: ${result.currentRanges.size} major versions")
+      println(s"Available version ranges: ${result.availableRanges.size} major versions")
+
+      if (result.hasChanges) {
+        if (dryRunMode) {
+          println("\n[DRY RUN] Would make the following changes:")
+        } else {
+          val yamlContent = generateYamlContent(result.mergedRanges)
+          IO.write(file("versions.yaml"), yamlContent)
+          println("\nUpdated versions.yaml with new Scala versions")
+        }
+
+        result.changes.foreach(println)
       } else {
-        println("No new versions found - versions.yaml is up to date")
+        println("\nNo new versions found - versions.yaml is up to date")
       }
     }
   }
