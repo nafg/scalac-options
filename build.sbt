@@ -12,6 +12,15 @@ ThisBuild / organization := "io.github.nafg.scalac-options"
 
 ThisBuild / versionScheme := Some("early-semver")
 
+val updateVersions =
+  taskKey[Unit]("Update versions.yaml with latest Scala releases from Maven Central")
+updateVersions := {
+  import scala.concurrent.ExecutionContext.Implicits.global
+  streams.value.log.info("Fetching latest Scala versions from Maven Central...")
+  Await.result(VersionUpdater.updateVersionsFile, Duration.Inf)
+  streams.value.log.info("Finished updating versions.yaml")
+}
+
 val downloadScalaCompilerJars =
   taskKey[Unit]("Download all scala compiler jars")
 downloadScalaCompilerJars := {
