@@ -86,7 +86,7 @@ object Generator {
       )
   }
 
-  private def versions = Versions.versions
+  private def versions = Versions.loadVersions()
 
   def prefetch: Future[Unit] = prefetch(versions.flatMap(_.allMinors))
 

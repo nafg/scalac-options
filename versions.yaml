@@ -1,25 +1,25 @@
-2:
-  11:
+'2':
+  '11':
     0..12:
-      helpFlags: [ -help, -X, -Y ]
+      helpFlags: [-help, -X, -Y]
       settings:
         language:
           - lit: '-language:'
           - param: features
-  12:
-    0..20:
-      helpFlags: [ -help, -X, -Y ]
+  '12':
+    0..21:
+      helpFlags: [-help, -X, -Y]
       settings:
         language:
           - lit: '-language:'
           - param: features
-  13:
-    0..17:
-      helpFlags: [ -help, -V, -W, -X, -Y ]
-3:
-  0:
+  '13':
+    0..18:
+      helpFlags: [-help, -V, -W, -X, -Y]
+'3':
+  '0':
     0..2:
-      helpFlags: [ -help, -X, -Y ]
+      helpFlags: [-help, -X, -Y]
       settings:
         encoding:
           - lit: '-encoding '
@@ -27,9 +27,9 @@
         language:
           - lit: '-language:'
           - param: features
-  1:
+  '1':
     0..3:
-      helpFlags: [ -help, -W, -X, -Y ]
+      helpFlags: [-help, -W, -X, -Y]
       settings:
         encoding:
           - lit: '-encoding '
@@ -37,9 +37,9 @@
         language:
           - lit: '-language:'
           - param: features
-  2:
+  '2':
     0..2:
-      helpFlags: [ -help, -W, -X, -Y ]
+      helpFlags: [-help, -W, -X, -Y]
       settings:
         encoding:
           - lit: '-encoding '
@@ -47,9 +47,9 @@
         language:
           - lit: '-language:'
           - param: features
-  3:
+  '3':
     0..7:
-      helpFlags: [ -help, -W, -X, -Y ]
+      helpFlags: [-help, -W, -X, -Y]
       settings:
         encoding:
           - lit: '-encoding '
@@ -57,9 +57,9 @@
         language:
           - lit: '-language:'
           - param: features
-  4:
+  '4':
     0..3:
-      helpFlags: [ -help, -W, -X, -Y ]
+      helpFlags: [-help, -W, -X, -Y]
       settings:
         encoding:
           - lit: '-encoding '
@@ -67,9 +67,9 @@
         language:
           - lit: '-language:'
           - param: features
-  5:
+  '5':
     0..2:
-      helpFlags: [ -help, -W, -X, -Y ]
+      helpFlags: [-help, -W, -X, -Y]
       settings:
         encoding:
           - lit: '-encoding '
@@ -77,9 +77,9 @@
         language:
           - lit: '-language:'
           - param: features
-  6:
+  '6':
     0..4:
-      helpFlags: [ -help, -W, -X, -Y ]
+      helpFlags: [-help, -W, -X, -Y]
       settings:
         encoding:
           - lit: '-encoding '
@@ -87,9 +87,19 @@
         language:
           - lit: '-language:'
           - param: features
-  7:
+  '7':
+    0..4:
+      helpFlags: [-help, -W, -X, -Y]
+      settings:
+        encoding:
+          - lit: '-encoding '
+          - param: encoding
+        language:
+          - lit: '-language:'
+          - param: features
+  '8':
     0..3:
-      helpFlags: [ -help, -W, -X, -Y ]
+      helpFlags: [-help, -W, -X, -Y]
       settings:
         encoding:
           - lit: '-encoding '

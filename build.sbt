@@ -5,7 +5,7 @@ import sbt.complete.DefaultParsers.spaceDelimited
 import _root_.io.github.nafg.scalacoptions.{ScalacOptions, options}
 
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.*
 
 
 ThisBuild / crossScalaVersions := Seq("2.12.21", "2.13.18", "3.3.7")
@@ -21,6 +21,19 @@ ThisBuild / versionScheme := Some("early-semver")
 // (NoWorkTreeException on load). Shell out to the `git` CLI instead. See sbt/sbt#2323.
 useReadableConsoleGit
 
+def runVersionUpdater(log: sbt.util.Logger, dryRun: Boolean): Unit = {
+  import scala.concurrent.ExecutionContext.Implicits.global
+  log.info(Await.result(new VersionUpdater().run(dryRun = dryRun), 5.minutes))
+}
+
+val updateVersions =
+  taskKey[Unit]("Update versions.yaml with latest Scala patch releases from Maven Central")
+updateVersions := runVersionUpdater(streams.value.log, dryRun = false)
+
+val updateVersionsDryRun =
+  taskKey[Unit]("Check for new Scala versions without modifying versions.yaml")
+updateVersionsDryRun := runVersionUpdater(streams.value.log, dryRun = true)
+
 val downloadScalaCompilerJars =
   taskKey[Unit]("Download all scala compiler jars")
 downloadScalaCompilerJars := {
@@ -35,7 +48,7 @@ val getOutputs = taskKey[Generator.Outputs](
 
 def selectScalaVersions(args: Seq[String]): Seq[Versions.Minor] = {
   val requested = args.flatMap(_.split(",")).filter(_.nonEmpty)
-  val all       = Versions.versions.flatMap(_.allMinors)
+  val all       = Versions.loadVersions().flatMap(_.allMinors)
   if (requested.isEmpty) all
   else {
     val allByVersion = all.map(version => version.versionString -> version).toMap
