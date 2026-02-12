@@ -12,6 +12,31 @@ ThisBuild / organization := "io.github.nafg.scalac-options"
 
 ThisBuild / versionScheme := Some("early-semver")
 
+val updateVersions =
+  taskKey[Unit]("Update versions.yaml with latest Scala releases from Maven Central")
+updateVersions := {
+  import scala.concurrent.ExecutionContext.Implicits.global
+  streams.value.log.info("Fetching latest Scala versions from Maven Central...")
+  Await.result(VersionUpdater.updateVersionsFile(dryRunMode = false), Duration.Inf)
+  streams.value.log.info("Finished updating versions.yaml")
+}
+
+val updateVersionsDryRun =
+  taskKey[Unit]("Check for new Scala versions without modifying versions.yaml")
+updateVersionsDryRun := {
+  import scala.concurrent.ExecutionContext.Implicits.global
+  streams.value.log.info("Checking for new Scala versions (dry run)...")
+  Await.result(VersionUpdater.updateVersionsFile(dryRunMode = true), Duration.Inf)
+}
+
+val testVersionUpdater =
+  taskKey[Unit]("Run unit tests for VersionUpdater")
+testVersionUpdater := {
+  streams.value.log.info("Running VersionUpdater tests...")
+  VersionUpdaterTest.runTests()
+  streams.value.log.info("All tests passed!")
+}
+
 val downloadScalaCompilerJars =
   taskKey[Unit]("Download all scala compiler jars")
 downloadScalaCompilerJars := {
