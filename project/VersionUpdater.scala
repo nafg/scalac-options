@@ -1,5 +1,5 @@
 import coursier.core.{Module, ModuleName, Organization}
-import coursier.{Dependency, Versions}
+import coursier.{Dependency, Versions => CoursierVersions}
 import io.circe.yaml.parser
 import io.circe.{Decoder, Json}
 import sbt.io.IO
@@ -53,11 +53,11 @@ object VersionUpdater {
     val scala3Compiler = Module(Organization("org.scala-lang"), ModuleName("scala3-compiler_3"), Map.empty)
 
     for {
-      scala2VersionsResult <- Versions()
+      scala2VersionsResult <- CoursierVersions()
         .withModule(scala2Compiler)
         .result()
         .future()
-      scala3VersionsResult <- Versions()
+      scala3VersionsResult <- CoursierVersions()
         .withModule(scala3Compiler)
         .result()
         .future()
@@ -158,7 +158,7 @@ object VersionUpdater {
       }
     }
 
-    result.map { case (k, v) => k -> v.sorted(Ordering.by[(VersionRange, Int), (Int, Int)](r => (r.start, r.end))).reverse }.toMap
+    result.map { case (k, v) => k -> v.sorted(Ordering.by[VersionRange, (Int, Int)](r => (r.start, r.end))).reverse }.toMap
   }
 
   def mergeVersionRanges(
@@ -171,7 +171,7 @@ object VersionUpdater {
       val availableRanges = available.getOrElse(key, Seq.empty)
 
       // Find the maximum patch version we need to cover
-      val maxPatch = availableRanges.map(_.end).maxOption.getOrElse(0)
+      val maxPatch = if (availableRanges.isEmpty) 0 else availableRanges.map(_.end).max
 
       // Extend existing ranges or add new ones
       val merged = if (currentRanges.isEmpty) {
