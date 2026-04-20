@@ -9,10 +9,15 @@ scalac-options is a build-tool-agnostic Scala library that provides a type-safe 
 ## Build Commands
 
 - `sbt compile` - Compile the generator and generated sources
+- `sbt updateVersions` - Query Maven Central and update versions.yaml with latest Scala releases
+- `sbt updateVersionsDryRun` - Check for new versions without modifying versions.yaml
+- `sbt testVersionUpdater` - Run unit tests for the version updater
 - `sbt downloadScalaCompilerJars` - Prefetch all compiler artifacts from versions.yaml (run once after updating version list)
 - `sbt getOutputs` - Fetch and cache `scalac -help` outputs for all configured versions
 - `sbt generate` - Regenerate option case classes under `src/main/scala/io/github/nafg/scalacoptions`
 - `sbt test` - Run tests
+
+See [VERSION_UPDATER_TESTING.md](VERSION_UPDATER_TESTING.md) for detailed testing instructions.
 
 ## Architecture
 
@@ -46,6 +51,7 @@ All generator source code lives under `project/` because sbt's meta-build perfor
 
 - **project/Generator.scala** - Main orchestration logic
 - **project/Versions.scala** - Parses versions.yaml and models version hierarchy
+- **project/VersionUpdater.scala** - Fetches latest Scala releases from Maven Central and updates versions.yaml
 - **project/GetHelpString.scala** - Downloads compiler JARs and extracts help output
 - **project/FastParseParser.scala** - Parses scalac help text into Setting objects
 - **project/CodeGen.scala** - Generates trait method definitions
@@ -63,7 +69,25 @@ Generated traits go to `target/.../src_managed/` but are also written to `src/ma
 
 ## Development Workflow
 
-### Adding a New Scala Version
+### Updating to Latest Scala Versions (Automated)
+
+The project includes an automated version updater that fetches the latest Scala releases from Maven Central:
+
+1. Run `sbt updateVersions` to automatically update `versions.yaml` with new Scala releases
+2. Run `sbt downloadScalaCompilerJars` to fetch the new compiler JARs
+3. Run `sbt generate` to regenerate option traits with the new versions
+4. Review the git diff to verify new options were added correctly
+
+The updater automatically:
+- Queries Maven Central for all scala-compiler (2.x) and scala3-compiler_3 (3.x) releases
+- Groups patch versions into ranges (e.g., "0..17" for patches 0 through 17)
+- Applies appropriate default helpFlags based on the version (e.g., Scala 2.13+ includes `-W`)
+- Extends existing version ranges when new patches are released
+- Preserves custom settings defined in versions.yaml
+
+### Adding a New Scala Version (Manual)
+
+If you need to manually add a version or customize settings:
 
 1. Update `versions.yaml` with the new version range and help flags
 2. Run `sbt downloadScalaCompilerJars` to fetch the new compiler
