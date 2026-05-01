@@ -1,0 +1,61 @@
+Usage: scalac <options> <source files>
+
+    |-- Notes on option parsing --
+    |Boolean settings are always false unless set.
+    |Where multiple values are accepted, they should be comma-separated.
+    |  example: -Xplugin:plugin1,plugin2
+    |<phases> means one or a comma-separated list of:
+    |  - (partial) phase names with an optional "+" suffix to include the next phase
+    |  - the string "all"
+    |  example: -Vprint:all prints all phases.
+    |  example: -Vprint:typer,mixin prints the typer and mixin phases.
+    |  example: -Ylog:erasure+ logs the erasure phase and the phase after the erasure phase.
+    |           This is useful because during the tree transform of phase X, we often
+    |           already are in phase X + 1.
+  
+Possible warning options include:
+[0m                    -Wall[0m  Enable all warning settings.
+[0m                   -Wconf[0m  Configure compiler warnings.
+[0m   -Wenum-comment-discard[0m  Warn when a comment ambiguously assigned to multiple enum cases is discarded.
+[0m                  -Werror[0m  Fail the compilation if there are any warnings.
+[0m   -Wimplausible-patterns[0m  Warn if comparison with a pattern value looks like it might always fail.
+[0m      -Wnonunit-statement[0m  Warn when block statements are non-Unit expressions.
+[0m   -Wrecurse-with-default[0m  Warn when a method calls itself with a default argument.
+[0m              -Wsafe-init[0m  Ensure safe initialization of objects.
+[0m                 -Wshadow[0m  Enable or disable specific `shadow` warnings
+                           Choices : 
+                           - all, 
+                           - private-shadow :
+                           	Warn if a private field or class parameter shadows a superclass field, 
+                           - type-parameter-shadow :
+                           	Warn when a type parameter shadows a type already in the scope
+[0m  -Wtostring-interpolated[0m  Warn a standard interpolator used toString on a reference type.
+[0m-WunstableInlineAccessors[0m  Warn an inline methods has references to non-stable binary APIs.
+[0m                 -Wunused[0m  Enable or disable specific `unused` warnings
+                           Choices : 
+                           - nowarn, 
+                           - all, 
+                           - imports :
+                           	Warn if an import selector is not referenced., 
+                           - privates :
+                           	Warn if a private member is unused, 
+                           - locals :
+                           	Warn if a local definition is unused, 
+                           - explicits :
+                           	Warn if an explicit parameter is unused, 
+                           - implicits :
+                           	Warn if an implicit parameter is unused, 
+                           - params :
+                           	Enable -Wunused:explicits,implicits, 
+                           - patvars :
+                           	Warn if a variable bound in a pattern is unused, 
+                           - linted :
+                           	Enable -Wunused:imports,privates,locals,implicits, 
+                           - strict-no-implicit-warn :
+                           	Same as -Wunused:imports, only for imports of explicit named members.
+                           	NOTE : This overrides -Wunused:imports and NOT set by -Wunused:all, 
+                           - unsafe-warn-patvars :
+                           	Deprecated alias for `patvars`
+[0m          -Wvalue-discard[0m  Warn when non-Unit expression results are unused.
+[0m            -Wwrong-arrow[0m  Warn if function arrow was used instead of context literal ?=>.
+[0m                  @<file>[0m  A text file containing compiler arguments (options and source files).

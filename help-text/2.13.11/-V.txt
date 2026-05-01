@@ -1,0 +1,48 @@
+Usage: scalac <options> <source files>
+
+Verbose options:
+  -Vbrowse:<phases>                 Browse the abstract syntax tree after <phases>
+  -Vclasspath                       Output information about what classpath is being applied. [false]
+  -Vdebug                           Increase the quantity of debugging output. [false]
+  -Vdebug-tasty                     Increase the quantity of debugging output when unpickling tasty. [false]
+  -Vdebug-type-error                Print the stack trace when any error is caught. [false]
+  -Vdoc                             Trace scaladoc activity. [false]
+  -Vfree-terms                      Print a message when reification creates a free term. [false]
+  -Vfree-types                      Print a message when reification resorts to generating a free type. [false]
+  -Vhot-statistics                  Enable `-Vstatistics` to also print hot statistics. [false]
+  -Vide                             Generate, validate and output trees using the interactive compiler. [false]
+  -Vimplicit-conversions            Print a message whenever an implicit conversion is inserted. [false]
+  -Vimplicits                       Print dependent missing implicits. [false]
+  -Vimplicits-max-refined <n>       max chars for printing refined types, abbreviate to `F {...}`
+  -Vimplicits-verbose-tree          Display all intermediate implicits in a chain. [false]
+  -Vinline <package/Class.method>   Print a summary of inliner activity; `_` to print all, prefix match to select.
+  -Vlog:<phases>                    Log operations during <phases>
+  -Vmacro                           Trace macro activities: compilation, generation of synthetics, classloading, expansion, exceptions. [false]
+  -Vmacro-lite                      Trace macro activities with less output. [false]
+  -Vopt <package/Class.method>      Trace the optimizer progress for methods; `_` to print all, prefix match to select.
+  -Vpatmat                          Trace pattern matching translation. [false]
+  -Vphases                          Print a synopsis of compiler phases. [false]
+  -Vpos                             Trace position validation. [false]
+  -Vprint[:phases]                  Print out program after (or ~phase for before and after) <phases> (default: typer)
+  -Vprint-args <file>               Print all compiler arguments to the specified location. Use - to echo to the reporter.
+  -Vprint-pos                       Print tree positions, as offsets. [false]
+  -Vprint-types                     Print tree types (debugging option). [false]
+  -Vquasiquote                      Trace quasiquotations. [false]
+  -Vreflective-calls                Print a message when a reflective method call is generated [false]
+  -Vreify                           Trace reification. [false]
+  -Vshow:<phases>                   (Requires -Xshow-class or -Xshow-object) Show after <phases>
+  -Vshow-class <class>              Show internal representation of class.
+  -Vshow-member-pos <output style>  Show start and end positions of members (implies -Yrangepos)
+  -Vshow-object <object>            Show internal representation of object.
+  -Vshow-symkinds                   Print abbreviated symbol kinds next to symbol names. [false]
+  -Vshow-symowners                  Print owner identifiers next to symbol names. [false]
+  -Vstatistics[:phases]             Print compiler statistics for specific phases <phases> (default: parser,typer,patmat,erasure,cleanup,jvm)
+  -Vsymbols                         Print the AST symbol hierarchy after each phase. [false]
+  -Vtype-diffs                      Print found/required error messages as colored diffs. [false]
+  -Vtyper                           Trace type assignments. [false]
+
+-- Note --
+Boolean settings generally are false unless set: -Xdev -Xcheck-init:true -Xprompt:false
+Multi-valued settings are comma-separated: -Xlint:infer-any,unused,-missing-interpolator
+Phases are a list of names, ids, or ranges of ids: -Vprint:parser,typer,5-10 -Ylog:-4
+Use _ to enable all: -language:_ -Vprint:_

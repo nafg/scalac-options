@@ -1,0 +1,115 @@
+Usage: scalac <options> <source files>
+where possible standard options include:
+[0m          -D<property=value>[0m  Pass -D<property=value> directly to the runtime system.
+[0m                    -J<flag>[0m  Pass -J<flag> directly to the runtime system.
+[0m                          -P[0m  Pass an option to a plugin, e.g. -P:<plugin>:<opt>
+[0m                          -V[0m  Print a synopsis of verbose options.
+[0m                          -W[0m  Print a synopsis of warning options.
+[0m                      -Wconf[0m  Configure compiler warnings.
+[0m                     -Werror[0m  Fail the compilation if there are any warnings.
+[0m                          -X[0m  Print a synopsis of advanced options.
+[0m                          -Y[0m  Print a synopsis of private options.
+[0m              -bootclasspath[0m  Override location of bootstrap class files.
+[0m                  -classpath[0m  Specify where to find user class files.
+                              Default .
+[0m                      -color[0m  Colored output
+                              Default always
+                              Choices : always, never
+[0m-coverage-exclude-classlikes[0m  List of regexes for packages, classes and modules to exclude from coverage.
+[0m     -coverage-exclude-files[0m  List of regexes for files to exclude from coverage.
+[0m               -coverage-out[0m  Destination for coverage classfiles and instrumentation data.
+[0m                          -d[0m  Destination for generated classfiles.
+[0m                -deprecation[0m  Emit warning and location for usages of deprecated APIs.
+[0m                   -encoding[0m  Specify character encoding used by source files.
+                              Default UTF-8
+[0m               -experimental[0m  Annotate all top-level definitions with @experimental. This enables the use of experimental features anywhere in the project.
+[0m                    -explain[0m  Explain errors in more detail.
+[0m             -explain-cyclic[0m  Explain cyclic reference errors in more detail.
+[0m              -explain-types[0m  Explain type errors in more detail (deprecated, use -explain instead).
+[0m                    -extdirs[0m  Override location of installed extensions.
+[0m                    -feature[0m  Emit warning and location for usages of features that should be imported explicitly.
+[0m                 -from-tasty[0m  Compile classes from tasty files. The arguments are .tasty or .jar files.
+[0m                       -help[0m  Print a synopsis of standard options.
+[0m                     -indent[0m  Together with -rewrite, remove {...} syntax when possible due to significant indentation.
+[0m        -java-output-version[0m  Compile code with classes specific to the given version of the Java platform available on the classpath and emit bytecode for this version. Corresponds to -release flag in javac.
+                              Choices : 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21
+[0m          -javabootclasspath[0m  Override java boot classpath.
+[0m                -javaextdirs[0m  Override java extdirs classpath.
+[0m                   -language[0m  Enable one or more language features.
+                              Choices : 
+                              - help :
+                              	Display all available features, 
+                              - noAutoTupling :
+                              	Disable automatic tupling, 
+                              - dynamics :
+                              	Allow direct or indirect subclasses of scala.Dynamic, 
+                              - unsafeNulls :
+                              	Enable unsafe nulls for explicit nulls, 
+                              - postfixOps :
+                              	Allow postfix operators (not recommended), 
+                              - strictEquality :
+                              	Enable strict equality (disable canEqualAny), 
+                              - implicitConversions :
+                              	Allow implicit conversions without warnings, 
+                              - adhocExtensions :
+                              	Allow ad-hoc extension methods, 
+                              - experimental.namedTypeArguments :
+                              	Allow named type arguments, 
+                              - experimental.genericNumberLiterals :
+                              	Allow generic number literals, 
+                              - experimental.macros :
+                              	Allow Scala 2 macros, 
+                              - experimental.dependent :
+                              	Allow dependent method types, 
+                              - experimental.erasedDefinitions :
+                              	Allow erased definitions, 
+                              - deprecated.symbolLiterals :
+                              	Allow symbol literals, 
+                              - experimental.fewerBraces :
+                              	Enable support for using indentation for arguments, 
+                              - experimental.saferExceptions :
+                              	Enable safer exceptions, 
+                              - experimental.clauseInterleaving :
+                              	Enable clause interleaving, 
+                              - experimental.pureFunctions :
+                              	Enable pure functions for capture checking, 
+                              - experimental.captureChecking :
+                              	Enable experimental capture checking, 
+                              - experimental.into :
+                              	Allow into modifier on parameter types, 
+                              - experimental.namedTuples :
+                              	Allow named tuples, 
+                              - experimental.modularity :
+                              	Enable experimental modularity features, 
+                              - experimental.betterMatchTypeExtractors :
+                              	Enable better match type extractors, 
+                              - experimental.betterFors :
+                              	Enable improvements in `for` comprehensions
+[0m                 -new-syntax[0m  Require `then` and `do` in control expressions.
+[0m                  -no-indent[0m  Require classical {...} syntax, indentation is not significant.
+[0m                     -nowarn[0m  Silence all warnings.
+[0m                 -old-syntax[0m  Require `(...)` around conditions.
+[0m                  -pagewidth[0m  Set page width
+                              Default 20000
+[0m                -print-lines[0m  Show source code line numbers.
+[0m                -print-tasty[0m  Prints the raw tasty.
+[0m                -project-url[0m  The source repository of your project.
+[0m                    -rewrite[0m  When used in conjunction with a `...-migration` source version, rewrites sources to migrate to new version.
+[0m                    -scalajs[0m  Compile in Scala.js mode (requires scalajs-library.jar on the classpath).
+[0m-scalajs-genStaticForwardersForNonTopLevelObjects
+                            [0m  Generate static forwarders even for non-top-level objects (Scala.js only).
+[0m       -scalajs-mapSourceURI[0m  rebases source URIs from uri1 to uri2 (or to a relative URI) for source maps (Scala.js only).
+[0m          -semanticdb-target[0m  Specify an alternative output directory for SemanticDB files.
+[0m            -semanticdb-text[0m  Specifies whether to include source code in SemanticDB files or not.
+[0m                     -source[0m  source version
+                              Default 3.6
+                              Choices : 3.0-migration, 3.0, 3.1, 3.2-migration, 3.2, 3.3-migration, 3.3, 3.4-migration, 3.4, 3.5-migration, 3.5, 3.6-migration, 3.6, 3.7-migration, 3.7, future-migration, future, never
+[0m                 -sourcepath[0m  Specify location(s) of source files.
+[0m                 -sourceroot[0m  Specify workspace root directory.
+                              Default .
+[0m                  -unchecked[0m  Enable additional warnings where generated code depends on assumptions.
+[0m                     -uniqid[0m  Uniquely tag all identifiers in debugging output.
+[0m                  -usejavacp[0m  Utilize the java.class.path in classpath resolution.
+[0m                    -verbose[0m  Output messages about what the compiler is doing.
+[0m                    -version[0m  Print product version and exit.
+[0m                     @<file>[0m  A text file containing compiler arguments (options and source files).
