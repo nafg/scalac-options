@@ -49,6 +49,9 @@ jobs:
       - name: Build project
         run: sbt '++ ${{ matrix.scala }}' test
 
+      - name: Verify generated sources match committed
+        run: git diff --exit-code
+
       - name: Compress target directories
         run: tar cf targets.tar target project/target
 

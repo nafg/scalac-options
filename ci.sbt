@@ -35,6 +35,10 @@ inThisBuild(
           "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}"
         )
       )
+    ),
+    githubWorkflowBuildPostamble += WorkflowStep.Run(
+      commands = List("git diff --exit-code"),
+      name = Some("Verify generated sources match committed")
     )
   )
 )
