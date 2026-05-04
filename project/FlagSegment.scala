@@ -1,15 +1,15 @@
-import io.circe.generic.extras.Configuration
-import io.circe.generic.extras.semiauto.deriveConfiguredCodec
-import io.circe.{Codec, Encoder}
 import sjsonnew.BasicJsonProtocol.{flatUnionFormat2, isoStringFormat}
 import sjsonnew.{IsoString, JsonFormat}
+import zio.json.{DeriveJsonCodec, JsonCodec, jsonHint}
 
 
 sealed trait FlagSegment
 
 object FlagSegment {
+  @jsonHint("lit")
   case class Literal(text: String) extends FlagSegment
 
+  @jsonHint("param")
   case class Parameter(name: String) extends FlagSegment
 
   implicit val literalIsoString: IsoString[Literal]       =
@@ -19,24 +19,7 @@ object FlagSegment {
   implicit val flagSegmentFormat: JsonFormat[FlagSegment] =
     flatUnionFormat2[FlagSegment, Literal, Parameter]
 
-  private def renamingConfig(f: PartialFunction[String, String]) =
-    Configuration.default.copy(transformMemberNames = f.orElse { case s => s })
-
-  implicit val codecLiteral: Codec[Literal] = {
-    implicit val config = renamingConfig { case "text" => "lit" }
-    deriveConfiguredCodec
-  }
-
-  implicit val codecParameter: Codec[Parameter] = {
-    implicit val config = renamingConfig { case "name" => "param" }
-    deriveConfiguredCodec
-  }
-
-  implicit val codec: Codec[FlagSegment] = Codec.from(
-    codecLiteral.or(codecParameter.map(identity)),
-    Encoder.instance {
-      case literal: Literal     => codecLiteral(literal)
-      case parameter: Parameter => codecParameter(parameter)
-    }
-  )
+  implicit val literalCodec: JsonCodec[Literal]     = JsonCodec.string.transform(Literal(_), _.text)
+  implicit val parameterCodec: JsonCodec[Parameter] = JsonCodec.string.transform(Parameter(_), _.name)
+  implicit val codec: JsonCodec[FlagSegment]        = DeriveJsonCodec.gen[FlagSegment]
 }
