@@ -9,7 +9,7 @@ import scala.concurrent.duration.Duration
 ThisBuild / crossScalaVersions := Seq("2.12.21", "2.13.18", "3.3.7")
 ThisBuild / scalaVersion       := "2.12.21"
 ThisBuild / scalacOptions ++=
-  ScalacOptions.all(scalaVersion.value)((opts: options.Common) => opts.deprecation)
+  ScalacOptions.all(scalaVersion.value)((opts: options.Common) => opts.deprecation ++ opts.feature)
 
 ThisBuild / organization := "io.github.nafg.scalac-options"
 
