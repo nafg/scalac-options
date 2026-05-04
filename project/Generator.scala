@@ -10,9 +10,11 @@ import sjsonnew.BasicJsonProtocol.*
 object Generator {
   lazy val parser = FastParseParser
 
-  private def parseOutputs(outputs: Seq[String]) =
+  private def parseOutputs(version: Versions.Minor, outputs: Seq[(String, String)]) =
     outputs
-      .flatMap(parser.parse)
+      .flatMap { case (flag, output) =>
+        parser.parse(output, s"$version $flag")
+      }
       .toMap
       .values
       .flatten
@@ -110,7 +112,7 @@ object Generator {
     val allSettings =
       outputs.map { case (version, pages) =>
         val settings =
-          parseOutputs(pages.map(_._2))
+          parseOutputs(version, pages)
             .map { s =>
               version.settings.get(s.name) match {
                 case None           => s

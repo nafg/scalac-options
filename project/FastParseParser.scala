@@ -115,7 +115,7 @@ object FastParseParser {
     * @return
     *   a Map of section descriptions to settings within them
     */
-  def parse(text: String): Map[String, Seq[Setting]] = {
+  def parse(text: String, sourceName: String = "unknown source"): Map[String, Seq[Setting]] = {
     val textWithoutANSI = ansiRegex.replaceAllIn(text, "")
     fastparse.parse(textWithoutANSI, parser(_), verboseFailures = true) match {
       case Parsed.Success(groups, index) =>
@@ -127,7 +127,7 @@ object FastParseParser {
         val all       = asMap
         val remaining = text.drop(index)
         if (remaining.nonEmpty) {
-          println("Remaining: ")
+          println(s"Remaining from $sourceName: ")
           pprintln(remaining)
         }
         all
