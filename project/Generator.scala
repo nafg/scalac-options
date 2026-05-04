@@ -1,9 +1,10 @@
-import sjsonnew.BasicJsonProtocol._
-import sjsonnew._
-
 import scala.collection.immutable.{ListMap, SortedMap}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.util.{Failure, Success}
+
+import sjsonnew.*
+import sjsonnew.BasicJsonProtocol.*
 
 
 object Generator {
@@ -96,6 +97,10 @@ object Generator {
             version -> version.helpFlags.map(flag => flag -> runner(flag))
           println(s"Finished getting output from $version")
           res
+        }
+        .andThen {
+          case Success(_) =>
+          case Failure(e) => Console.err.println(s"Failed to get output from $version: ${e.getMessage}")
         }
     }
 
