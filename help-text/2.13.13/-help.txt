@@ -1,0 +1,50 @@
+Usage: scalac <options> <source files>
+
+Standard options:
+  -Dproperty=value             Pass -Dproperty=value directly to the runtime system.
+  -J<flag>                     Pass <flag> directly to the runtime system.
+  -P:<plugin>:<opt>            Pass an option to a plugin
+  -V                           Print a synopsis of verbose options. [false]
+  -W                           Print a synopsis of warning options. [false]
+  -Werror                      Fail the compilation if there are any warnings. [false]
+  -X                           Print a synopsis of advanced options. [false]
+  -Y                           Print a synopsis of private options. [false]
+  -bootclasspath <path>        Override location of bootstrap class files.
+  -classpath <path>            Specify where to find user class files.
+  -d <directory|jar>           destination for generated classfiles.
+  -dependencyfile <file>       Set dependency tracking file.
+  -deprecation                 Emit warning and location for usages of deprecated APIs. See also -Wconf. [false]
+  -encoding <encoding>         Specify character encoding used by source files.
+  -explaintypes                Explain type errors in more detail. [false]
+  -extdirs <path>              Override location of installed extensions.
+  -feature                     Emit warning and location for usages of features that should be imported explicitly. See also -Wconf. [false]
+  -g:<level>                   Set level of generated debugging info. (none,source,line,[vars],notailcalls)
+  -help                        Print a synopsis of standard options [false]
+  -javabootclasspath <path>    Override java boot classpath.
+  -javaextdirs <path>          Override java extdirs classpath.
+  -language:<features>         Enable or disable language features
+  -no-specialization           Ignore @specialize annotations. [false]
+  -nobootcp                    Do not use the boot classpath for the scala jars. [false]
+  -nowarn                      Generate no warnings. [false]
+  -opt:<optimizations>         Enable optimizations: `-opt:local`, `-opt:inline:<pattern>`; `-opt:help` for details.
+  -opt-inline-from:<patterns>  Patterns for classfile names from which to allow inlining, `help` for details.
+  -opt-warnings:<warnings>     Enable optimizer warnings, `help` for details.
+  -print                       Print program with Scala-specific features removed. [false]
+  -quickfix:<filters>          Apply quick fixes provided by the compiler for warnings and errors to source files
+  -release:<release>           Compile for a version of the Java API and target class file. (8,9,10,11,12,13,14,15,16,17,18,19,20,[21])
+  -rootdir <path>              The absolute path of the project root directory, usually the git/scm checkout. Used by -Wconf.
+  -sourcepath <path>           Specify location(s) of source files.
+  -toolcp <path>               Add to the runner classpath.
+  -unchecked                   Enable additional warnings where generated code depends on assumptions. See also -Wconf. [false]
+  -uniqid                      Uniquely tag all identifiers in debugging output. [false]
+  -usejavacp                   Utilize the java.class.path in classpath resolution. [false]
+  -usemanifestcp               Utilize the manifest in classpath resolution. [false]
+  -verbose                     Output messages about what the compiler is doing. [false]
+  -version                     Print product version and exit. [false]
+  @<file>                      A text file containing compiler arguments (options and source files) [false]
+
+Deprecated settings:
+  -optimize                    Enables optimizations. [false]
+                                 deprecated: Since 2.12, enables -opt:inline:**. This can be dangerous.
+  -target:<target>             Target platform for object files. ([8],9,10,11,12,13,14,15,16,17,18,19,20,21)
+                                 deprecated: Use -release instead to compile against the correct platform API.

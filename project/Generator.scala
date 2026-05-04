@@ -87,13 +87,15 @@ object Generator {
 
   def prefetch = GetHelpString.fetchAll(versions).map(_ => ())
 
-  def getOutputs =
-    Future.traverse(versions.flatMap(_.allMinors)) { version =>
-      println(s"Getting output from $version")
+  def getOutputs: Future[Outputs] =
+    getOutputs(versions.flatMap(_.allMinors).map(v => v -> v.helpFlags).toMap)
+
+  def getOutputs(needed: Map[Versions.Minor, Seq[String]]): Future[Outputs] =
+    Future.traverse(needed.toSeq.sortBy(_._1)) { case (version, flags) =>
+      println(s"Getting output from $version (${flags.mkString(", ")})")
       GetHelpString.runner(version)
         .map { runner =>
-          val res =
-            version -> version.helpFlags.map(flag => flag -> runner(flag))
+          val res = version -> flags.map(flag => flag -> runner(flag))
           println(s"Finished getting output from $version")
           res
         }

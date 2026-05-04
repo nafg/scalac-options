@@ -1,0 +1,44 @@
+Usage: scalac <options> <source files>
+where possible standard options include:
+  -Dproperty=value                     Pass -Dproperty=value directly to the runtime system.
+  -J<flag>                             Pass <flag> directly to the runtime system.
+  -P:<plugin>:<opt>                    Pass an option to a plugin
+  -Wconf:<patterns>                    Configure reporting of compiler warnings; use `help` for details.
+  -X                                   Print a synopsis of advanced options. [false]
+  -bootclasspath <path>                Override location of bootstrap class files.
+  -classpath <path>                    Specify where to find user class files.
+  -d <directory|jar>                   destination for generated classfiles.
+  -dependencyfile <file>               Set dependency tracking file.
+  -deprecation                         Emit warning and location for usages of deprecated APIs. See also -Wconf. [false]
+  -encoding <encoding>                 Specify character encoding used by source files.
+  -explaintypes                        Explain type errors in more detail. [false]
+  -extdirs <path>                      Override location of installed extensions.
+  -feature                             Emit warning and location for usages of features that should be imported explicitly. See also -Wconf. [false]
+  -g:<level>                           Set level of generated debugging info. (none,source,line,[vars],notailcalls)
+  -help                                Print a synopsis of standard options [false]
+  -javabootclasspath <path>            Override java boot classpath.
+  -javaextdirs <path>                  Override java extdirs classpath.
+  -language:<_,feature,-feature>       Enable or disable language features: `_' for all, `-language:help' to list choices.
+  -no-specialization                   Ignore @specialize annotations. [false]
+  -nobootcp                            Do not use the boot classpath for the scala jars. [false]
+  -nowarn                              Generate no warnings. [false]
+  -opt:<_,optimization,-optimization>  Enable optimizations: `_' for all, `-opt:help' to list choices.
+  -opt-inline-from:<patterns>          Patterns for classfile names from which to allow inlining, `help` for details.
+  -opt-warnings:<_,warning,-warning>   Enable optimizer warnings: `_' for all, `-opt-warnings:help' to list choices.
+  -print                               Print program with Scala-specific features removed. [false]
+  -release:<release>                   Compile for a version of the Java API and target class file. (5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,[21])
+  -rootdir <path>                      The absolute path of the project root directory, usually the git/scm checkout. Used by -Wconf.
+  -sourcepath <path>                   Specify location(s) of source files.
+  -target:<target>                     Target platform for object files. All JVM 1.5 - 1.7 targets are deprecated. (5,6,7,[8],9,10,11,12,13,14,15,16,17,18,19,20,21)
+  -toolcp <path>                       Add to the runner classpath.
+  -unchecked                           Enable additional warnings where generated code depends on assumptions. See also -Wconf. [false]
+  -uniqid                              Uniquely tag all identifiers in debugging output. [false]
+  -usejavacp                           Utilize the java.class.path in classpath resolution. [false]
+  -usemanifestcp                       Utilize the manifest in classpath resolution. [false]
+  -verbose                             Output messages about what the compiler is doing. [false]
+  -version                             Print product version and exit. [false]
+  @<file>                              A text file containing compiler arguments (options and source files) [false]
+
+Deprecated settings:
+  -optimise                            Compiler flag for the optimizer in Scala 2.11 [false]
+                                         deprecated: In 2.12, -optimise enables -opt:l:inline -opt-inline-from:**. Check -opt:help for using the Scala 2.12 optimizer.

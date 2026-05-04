@@ -11,9 +11,10 @@ The library itself cross-builds on Scala 2.12 / 2.13 / 3.3 (see `build.sbt` for 
 ## Build Commands
 
 - `sbt compile` - Compile the generator and generated sources
-- `sbt downloadScalaCompilerJars` - Prefetch all compiler artifacts from versions.yaml (run once after updating version list)
-- `sbt getOutputs` - Fetch and cache `scalac -help` outputs for all configured versions
-- `sbt generate` - Regenerate option traits under `target/scala-*/src_managed/io/github/nafg/scalacoptions`
+- `sbt downloadScalaCompilerJars` - Prefetch all compiler artifacts from versions.yaml
+- `sbt getOutputs` - Read committed help-text from `help-text/`; fetches only entries missing on disk
+- `sbt refreshOutputs` - Force re-fetch all help-text from network and overwrite `help-text/`
+- `sbt generate` - Write generated trait files to `src/main/scala-generated/io/github/nafg/scalacoptions/`
 - `sbt test` - Run tests
 
 ## Architecture
@@ -28,7 +29,13 @@ The library generates version-specific option traits from sbt tasks defined in t
    - Runs each compiler with help flags to extract available options
    - Parses outputs using FastParseParser
    - Builds inheritance hierarchy of option traits
-3. **Output** - Generated traits in `target/scala-*/src_managed/io/github/nafg/scalacoptions/options/`
+3. **Output** - Generated traits in `src/main/scala-generated/io/github/nafg/scalacoptions/options/` (committed)
+
+Both intermediates are committed:
+- `help-text/<version>/<flag>.txt` - cached `scalac -help` output (Layer 1)
+- `src/main/scala-generated/...` - generated trait sources (Layer 2)
+
+`sbt generate` runs on every compile via `sourceGenerators`; CI fails on uncommitted regeneration via `git diff --exit-code`.
 
 ### Key Abstractions
 
@@ -61,23 +68,30 @@ Hand-written runtime library code in `src/main/scala/`:
 - **WarningsConfig.scala** - DSL for building `-Wconf` strings with filters and actions
 - **VersionOptionsFunction.scala** - Function wrapper for version-specific option selection
 
-Generated traits go to `target/.../src_managed/` and are included as managed sources.
+Generated traits live at `src/main/scala-generated/io/github/nafg/scalacoptions/` (committed). They are wired into the build via `Compile / sourceGenerators` and not via `unmanagedSourceDirectories`, so each compile re-derives them from `help-text/`.
 
 ## Development Workflow
 
 ### Adding a New Scala Version
 
 1. Update `versions.yaml` with the new version range and help flags
-2. Run `sbt downloadScalaCompilerJars` to fetch the new compiler
-3. Run `sbt generate` to regenerate option traits
-4. Review the git diff to verify new options were added correctly
+2. Run `sbt getOutputs` — automatically fetches the now-missing entries and writes them to `help-text/`
+3. Run `sbt generate` to regenerate option traits under `src/main/scala-generated/`
+4. Review the git diff to verify new options were added correctly, commit both `help-text/` and `src/main/scala-generated/` changes
+
+### Refreshing Help Text Against Existing Versions
+
+To force re-fetch (e.g., after a generator/parser change that should re-pull all upstream help text):
+
+1. Run `sbt refreshOutputs` — overwrites all `help-text/<version>/<flag>.txt`
+2. Run `sbt generate`
+3. Review and commit the diffs
 
 ### Modifying Option Parsing
 
 When changing parser logic in `project/FastParseParser.scala`:
-1. Run `sbt getOutputs` to refresh cached outputs (if needed)
-2. Run `sbt generate` to regenerate with new parsing logic
-3. Review generated output for correctness
+1. Run `sbt generate` (no help-text refresh needed — parsing happens from cached `.txt` files)
+2. Review generated output for correctness
 
 ### Adding Custom Option Overrides
 
