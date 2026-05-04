@@ -125,7 +125,7 @@ object FastParseParser {
           else name.trim -> settings
         }
         val all       = asMap
-        val remaining = text.drop(index)
+        val remaining = textWithoutANSI.drop(index)
         if (remaining.nonEmpty) {
           println(s"Remaining from $sourceName: ")
           pprintln(remaining)
