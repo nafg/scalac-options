@@ -20,6 +20,7 @@ inThisBuild(
         o.copy(dirtySuffix = sbtdynver.GitDirtySuffix(""))
       )),
     dynverSonatypeSnapshots             := true,
+    githubWorkflowJavaVersions          := Seq(JavaSpec.zulu("17")),
     githubWorkflowScalaVersions         := githubWorkflowScalaVersions.value.map(_.replaceFirst("\\d+$", "x")),
     githubWorkflowTargetTags ++= Seq("v*"),
     githubWorkflowPublishTargetBranches := Seq(
