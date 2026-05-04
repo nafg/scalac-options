@@ -1,6 +1,8 @@
+import io.github.nafg.scalacoptions.runner.Scalac
+
 import scala.collection.immutable.{ListMap, SortedMap}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Future, blocking}
 import scala.util.{Failure, Success}
 
 import sjsonnew.*
@@ -90,25 +92,31 @@ object Generator {
 
   def prefetch: Future[Unit] = prefetch(versions.flatMap(_.allMinors))
 
-  def prefetch(versions: Seq[Versions.Minor]) = GetHelpString.fetchAllMinors(versions).map(_ => ())
+  def prefetch(versions: Seq[Versions.Minor]): Future[Unit] =
+    Scalac.fetchAllClasspaths(versions.map(_.versionString)).map(_ => ())
 
   def getOutputs: Future[Outputs] =
     getOutputs(versions.flatMap(_.allMinors))
 
-  def getOutputs(versions: Seq[Versions.Minor]) =
+  def getOutputs(versions: Seq[Versions.Minor]): Future[Outputs] =
     Future.traverse(versions) { version =>
-      println(s"Getting output from $version")
-      GetHelpString.runner(version)
-        .map { runner =>
-          val res =
-            version -> version.helpFlags.map(flag => flag -> runner(flag))
-          println(s"Finished getting output from $version")
-          res
+      Future {
+        println(s"Getting output from $version")
+        val pages = blocking {
+          version.helpFlags.map { flag =>
+            // Scalac 3.5+ writes help to stdout; earlier 3.x and 2.x write to stderr. Capture both
+            // and concatenate; the parser is permissive about leading/trailing noise.
+            val res  = Scalac.run(version.versionString, flag)
+            val text = res.stderr.trim + (if (res.stderr.nonEmpty) "\n" else "") + res.stdout.trim
+            flag -> text
+          }
         }
-        .andThen {
-          case Success(_) =>
-          case Failure(e) => Console.err.println(s"Failed to get output from $version: ${e.getMessage}")
-        }
+        println(s"Finished getting output from $version")
+        version -> pages
+      }.andThen {
+        case Success(_) =>
+        case Failure(e) => Console.err.println(s"Failed to get output from $version: ${e.getMessage}")
+      }
     }
 
   type Outputs = Seq[(Versions.Minor, Seq[(String, String)])]

@@ -31,6 +31,9 @@ object Scalac {
   def fetchClasspath(scalaVersion: String)(implicit ec: ExecutionContext): Future[Seq[File]] =
     Fetch().addDependencies(dependency(scalaVersion)).future()
 
+  def fetchAllClasspaths(scalaVersions: Seq[String])(implicit ec: ExecutionContext): Future[Seq[File]] =
+    Fetch().addDependencies(scalaVersions.map(dependency): _*).future()
+
   def run(scalaVersion: String, args: String*)(implicit ec: ExecutionContext): RunResult = {
     val files = Await.result(fetchClasspath(scalaVersion), Duration.Inf)
     val cmd   = Seq("java", "-cp", files.mkString(File.pathSeparator), mainClass(scalaVersion)) ++ args

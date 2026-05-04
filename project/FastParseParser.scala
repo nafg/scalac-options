@@ -115,58 +115,53 @@ object FastParseParser {
 
   private val ansiRegex = "\u001B\\[[;\\d]*m".r
 
-  private val choicesMarkerRegex = """\bChoices\s*:?\s*""".r
-  private val leadingChoiceName  = """^([a-z][a-z\-]*)""".r
+  // --- choices block parsing ---
+  // Scalac help text describes multi-choice flags (-Wunused, -Wshadow, -color, ...) inline:
+  //   3.3+: "Enable or disable specific `unused` warnings Choices :  - nowarn,  - all,  - imports : Warn ..."
+  //   3.1/3.2: "Enable or disable specific `unused` warnings Choices: nowarn, all."
+  // The parser splits this into a leading description plus a list of choice names. The dashed
+  // form must match the full "- name" marker because choice descriptions can contain commas and
+  // embedded examples like "Enable -Wunused:imports,privates" that must NOT be parsed as choices.
 
-  /** When a Setting's description contains a Scala 3 "Choices" block, replace it with one Setting
-    * per choice. The bare-flag Setting is unusable (scalac requires the choice argument), so it's
+  private def lowerLetter[_: P]: P[Unit]     = P(CharPred(c => c >= 'a' && c <= 'z'))
+  private def lowerOrDash[_: P]: P[Unit]     = P(CharPred(c => c >= 'a' && c <= 'z' || c == '-'))
+  private def choiceWord[_: P]: P[String]    = P((lowerLetter ~ lowerOrDash.rep).!)
+
+  private def skipUntilDash[_: P]: P[Unit]   = P((!"- " ~ AnyChar).rep)
+  private def dashedItem[_: P]: P[String]    = P("- " ~ choiceWord)
+  private def dashedChoices[_: P]: P[Seq[String]] =
+    P(skipUntilDash ~ (dashedItem ~ skipUntilDash).rep(1)).map(_.toSeq)
+
+  private def commaSep[_: P]: P[Unit]        = P("," ~ " ".rep)
+  private def bareChoices[_: P]: P[Seq[String]] =
+    P(choiceWord.rep(min = 1, sep = commaSep))
+
+  private def beforeMarker[_: P]: P[String]  = P((!"Choices" ~ AnyChar).rep.!)
+  private def marker[_: P]: P[Unit]          = P("Choices" ~ ":".? ~ " ".rep)
+  private def descWithChoices[_: P]: P[(String, Seq[String])] =
+    P(beforeMarker ~ marker ~ (dashedChoices | bareChoices))
+
+  /** When a Setting's description contains a "Choices" block, replace it with one Setting per
+    * choice. The bare-flag Setting is unusable (scalac requires the choice argument), so it's
     * dropped.
-    *
-    * Two formats are observed across Scala 3 versions:
-    *   - 3.1 / 3.2: comma-separated bare names ("Choices: nowarn, all.")
-    *   - 3.3+: each choice on its own line prefixed with "- " ("Choices :\n- nowarn,\n- all,\n
-    *     - imports :\n  Warn if ...")
-    *
-    * Detection: presence of "- " in the first ~80 chars after the "Choices" marker selects strict
-    * parsing (only pieces starting with "- " are choices). Otherwise permissive comma-split.
-    * Strict parsing is required for 3.3+ because choice descriptions can contain commas (and
-    * embedded examples like "Enable -Wunused:imports,privates").
     */
-  def expandChoices(setting: Setting): Seq[Setting] = {
-    val desc = setting.description
-    choicesMarkerRegex.findFirstMatchIn(desc) match {
-      case None    => Seq(setting)
-      case Some(m) =>
-        val mainDesc          = desc.substring(0, m.start).trim
-        val rest              = desc.substring(m.end)
-        val baseFlag          = setting.flagSegments.collect { case FlagSegment.Literal(t) => t }.mkString
-        val hasDashMarkers    = rest.take(80).contains("- ")
-        val candidatePieces   = rest.split(",").iterator.map(_.trim)
-        val choices: List[String] =
-          (if (hasDashMarkers)
-             candidatePieces.flatMap { piece =>
-               if (piece.startsWith("- "))
-                 leadingChoiceName.findFirstMatchIn(piece.stripPrefix("- ").trim).map(_.group(1))
-               else None
-             }
-           else
-             candidatePieces.flatMap { piece =>
-               leadingChoiceName.findFirstMatchIn(piece).map(_.group(1))
-             }
-          ).toList.distinct
-        if (choices.isEmpty) Seq(setting)
-        else
-          choices.map { choice =>
-            val newSegments = Seq(FlagSegment.Literal(s"$baseFlag:$choice"))
-            Setting(
-              name = nameFor(newSegments),
-              flagSegments = newSegments,
-              description = if (mainDesc.isEmpty) s"$baseFlag:$choice" else s"$mainDesc ($choice)",
-              isDeprecated = setting.isDeprecated
-            )
-          }
+  def expandChoices(setting: Setting): Seq[Setting] =
+    fastparse.parse(setting.description, descWithChoices(_)) match {
+      case Parsed.Success((mainDesc, names), _) if names.nonEmpty =>
+        val baseFlag = setting.flagSegments.collect { case FlagSegment.Literal(t) => t }.mkString
+        names.distinct.map { choice =>
+          val newSegments = Seq(FlagSegment.Literal(s"$baseFlag:$choice"))
+          Setting(
+            name = nameFor(newSegments),
+            flagSegments = newSegments,
+            description =
+              if (mainDesc.trim.isEmpty) s"$baseFlag:$choice"
+              else s"${mainDesc.trim} ($choice)",
+            isDeprecated = setting.isDeprecated
+          )
+        }
+      case _                                                      => Seq(setting)
     }
-  }
 
   /** @param text
     *   output of scalac help output
