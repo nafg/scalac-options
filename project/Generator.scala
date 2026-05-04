@@ -66,7 +66,7 @@ object Generator {
       implicit
       seqFormat: JsonFormat[Seq[(K, V)]]): JsonFormat[ListMap[K, V]] =
       new JsonFormat[ListMap[K, V]] {
-        override def write[J](obj: ListMap[K, V], builder: Builder[J]): Unit =
+        override def write[J](obj: ListMap[K, V], builder: Builder[J]): Unit           =
           seqFormat.write(obj.toSeq, builder)
         override def read[J](jsOpt: Option[J], unbuilder: Unbuilder[J]): ListMap[K, V] =
           ListMap(seqFormat.read(jsOpt, unbuilder): _*)
@@ -124,13 +124,11 @@ object Generator {
           settings.tails.filterNot(_.isEmpty).map(t => t.head._1 -> t)
         }
 
-    val commonAll = common(allSettings.map(_._2))
-    val commonEpoch =
-      groupedEpoch.mapValues(settings => common(settings.map(_._2)))
-    val commonMajor =
-      groupedMajor.mapValues(settings => common(settings.map(_._2)))
-    val commonRange =
-      groupedRange.mapValues(settings => common(settings.map(_._2)))
+    val commonAll   = common(allSettings.map(_._2))
+    val commonEpoch = groupedEpoch.mapValues(settings => common(settings.map(_._2)))
+    val commonMajor = groupedMajor.mapValues(settings => common(settings.map(_._2)))
+    val commonRange = groupedRange.mapValues(settings => common(settings.map(_._2)))
+
     println(s"All: ${commonAll.length} common settings")
     for ((v, s) <- commonEpoch) println(s"$v: ${s.length} common settings")
     for (((e, m), s) <- commonMajor)
@@ -138,12 +136,12 @@ object Generator {
     for ((v, s) <- commonRange)
       println(s"${v.versionString}+ ${s.length} common settings")
 
-    val commonContainer =
+    val commonContainer    =
       Container("Common", None, commonAll, isConcrete = false)
-    val epochContainers = commonEpoch.transform { (epoch, settings) =>
+    val epochContainers    = commonEpoch.transform { (epoch, settings) =>
       Container(s"V$epoch", Some(commonContainer), settings, isConcrete = false)
     }
-    val majorContainers = commonMajor.transform {
+    val majorContainers    = commonMajor.transform {
       case ((epoch, major), settings) =>
         val parent = epochContainers(epoch)
         Container(
@@ -153,7 +151,7 @@ object Generator {
           isConcrete = false
         )
     }
-    val rangeContainers =
+    val rangeContainers    =
       commonRange.foldLeft(Map.empty[Versions.Minor, Container]) {
         case (map, (version @ Versions.Minor(epoch, major, minor, prerelease, _, _), settings)) =>
           val parent =
@@ -163,14 +161,14 @@ object Generator {
               }
               .orElse(map.get(version.copy(minor = minor - 1)))
               .getOrElse(majorContainers((epoch, major)))
-          val name =
+          val name   =
             s"V${epoch}_${major}_$minor" + version.prereleaseString.fold("")("_" + _) + "_+"
           map + (version -> Container(name, Some(parent), settings, isConcrete = false))
       }
     val concreteContainers = ListMap(allSettings: _*).transform {
       case (version @ Versions.Minor(epoch, major, minor, _, _, _), settings) =>
         val parent = rangeContainers(version)
-        val name = s"V${epoch}_${major}_$minor" + version.prereleaseString.fold("")("_" + _)
+        val name   = s"V${epoch}_${major}_$minor" + version.prereleaseString.fold("")("_" + _)
         Container(name, Some(parent), settings, isConcrete = true)
     }
 

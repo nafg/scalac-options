@@ -76,7 +76,7 @@ object FastParseParser {
             .collect { case FlagSegment.Literal(text) => text }
             .flatMap(_.split("[:= -]"))
             .filter(_.nonEmpty)
-        val name = words.head + words.tail.map(_.capitalize).mkString
+        val name  = words.head + words.tail.map(_.capitalize).mkString
         Setting(name, flagSegments, description)
       }
   )
@@ -119,12 +119,12 @@ object FastParseParser {
     val textWithoutANSI = ansiRegex.replaceAllIn(text, "")
     fastparse.parse(textWithoutANSI, parser(_), verboseFailures = true) match {
       case Parsed.Success(groups, index) =>
-        val asMap = groups.toMap.map { case (name, settings) =>
+        val asMap     = groups.toMap.map { case (name, settings) =>
           if (name.trim == "Deprecated settings:")
-            name -> settings.map(_.copy(isDeprecated = true))
+            name         -> settings.map(_.copy(isDeprecated = true))
           else name.trim -> settings
         }
-        val all = asMap
+        val all       = asMap
         val remaining = text.drop(index)
         if (remaining.nonEmpty) {
           println("Remaining: ")

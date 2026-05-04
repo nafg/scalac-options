@@ -15,9 +15,9 @@ object Setting {
   implicit val settingLListIso: IsoLList.Aux[Setting, String :*: Seq[FlagSegment] :*: String :*: Boolean :*: LNil] =
     LList.iso(
       { case Setting(name, flagSegments, description, isDeprecated) =>
-        ("name" -> name) :*:
+        ("name"           -> name) :*:
           ("flagSegments" -> flagSegments) :*:
-          ("description" -> description) :*:
+          ("description"  -> description) :*:
           ("isDeprecated" -> isDeprecated) :*:
           LNil
       },
