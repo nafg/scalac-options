@@ -1,10 +1,11 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-The primary build definition lives in `build.sbt`, with release automation in `ci.sbt` and Scala release metadata in `versions.yaml`. Build-definition Scala code, including the generator invoked by sbt tasks, resides under `project/` (e.g., `project/Generator.scala`, `project/Versions.scala`); `project/*.sbt` configures that build definition's own build. Hand-written runtime library code lives under `src/main/scala`, while generated option traits are emitted under `target/scala-*/src_managed`.
+The primary build definition lives in `build.sbt`, with release automation in `ci.sbt` and Scala release metadata in `versions.yaml`. Build-definition Scala code, including the generator invoked by sbt tasks, resides under `project/` (e.g., `project/Generator.scala`, `project/Versions.scala`, `project/VersionUpdater.scala`); `project/*.sbt` configures that build definition's own build. Hand-written runtime library code lives under `src/main/scala`, while generated option traits are emitted under `target/scala-*/src_managed`.
 
 ## Build, Test, and Development Commands
 - `sbt compile` – compile the generator and any generated sources.
+- `sbt updateVersions` / `sbt updateVersionsDryRun` – query Maven Central and extend the top-most ranges in `versions.yaml` for new patch releases (dry-run mode reports what would change without writing).
 - `sbt downloadScalaCompilerJars` – prefetch all compiler artifacts defined in `versions.yaml`; run this once whenever you update the version list.
 - `sbt getOutputs` – fetch and cache `scalac -help` outputs for the configured versions; use to refresh local caches.
 - `sbt generate` – regenerate option traits under `target/scala-*/src_managed/io/github/nafg/scalacoptions`.

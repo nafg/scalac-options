@@ -5,13 +5,14 @@ import sbt.complete.DefaultParsers.spaceDelimited
 import _root_.io.github.nafg.scalacoptions.{ScalacOptions, options}
 
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.*
 
 
 ThisBuild / crossScalaVersions := Seq("2.12.21", "2.13.18", "3.3.7")
 ThisBuild / scalaVersion       := "2.12.21"
 ThisBuild / scalacOptions ++=
   ScalacOptions.all(scalaVersion.value)((opts: options.Common) => opts.deprecation ++ opts.feature)
+ThisBuild / scalacOptions ++= Seq("-release", "8")
 
 ThisBuild / organization := "io.github.nafg.scalac-options"
 
@@ -20,6 +21,19 @@ ThisBuild / versionScheme := Some("early-semver")
 // sbt-git defaults to JGit for read operations, but JGit 5.13.x doesn't support git worktrees
 // (NoWorkTreeException on load). Shell out to the `git` CLI instead. See sbt/sbt#2323.
 useReadableConsoleGit
+
+def runVersionUpdater(log: sbt.util.Logger, dryRun: Boolean): Unit = {
+  import scala.concurrent.ExecutionContext.Implicits.global
+  log.info(Await.result(new VersionUpdater().run(dryRun = dryRun), 5.minutes))
+}
+
+val updateVersions =
+  taskKey[Unit]("Update versions.yaml with latest Scala patch releases from Maven Central")
+updateVersions := runVersionUpdater(streams.value.log, dryRun = false)
+
+val updateVersionsDryRun =
+  taskKey[Unit]("Check for new Scala versions without modifying versions.yaml")
+updateVersionsDryRun := runVersionUpdater(streams.value.log, dryRun = true)
 
 val downloadScalaCompilerJars =
   taskKey[Unit]("Download all scala compiler jars")
@@ -35,7 +49,7 @@ val getOutputs = taskKey[Generator.Outputs](
 
 def selectScalaVersions(args: Seq[String]): Seq[Versions.Minor] = {
   val requested = args.flatMap(_.split(",")).filter(_.nonEmpty)
-  val all       = Versions.versions.flatMap(_.allMinors)
+  val all       = Versions.loadVersions().flatMap(_.allMinors)
   if (requested.isEmpty) all
   else {
     val allByVersion = all.map(version => version.versionString -> version).toMap
