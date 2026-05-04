@@ -88,10 +88,15 @@ object Generator {
 
   private def versions = Versions.versions
 
-  def prefetch = GetHelpString.fetchAll(versions).map(_ => ())
+  def prefetch: Future[Unit] = prefetch(versions.flatMap(_.allMinors))
 
-  def getOutputs =
-    Future.traverse(versions.flatMap(_.allMinors)) { version =>
+  def prefetch(versions: Seq[Versions.Minor]) = GetHelpString.fetchAllMinors(versions).map(_ => ())
+
+  def getOutputs: Future[Outputs] =
+    getOutputs(versions.flatMap(_.allMinors))
+
+  def getOutputs(versions: Seq[Versions.Minor]) =
+    Future.traverse(versions) { version =>
       println(s"Getting output from $version")
       GetHelpString.runner(version)
         .map { runner =>

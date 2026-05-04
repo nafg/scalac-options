@@ -1,4 +1,6 @@
 import sbt.util.CacheImplicits._
+import sbt.util.CacheStore
+import sbt.complete.DefaultParsers.spaceDelimited
 
 import _root_.io.github.nafg.scalacoptions.{ScalacOptions, options}
 
@@ -30,29 +32,25 @@ downloadScalaCompilerJars := {
 val getOutputs = taskKey[Generator.Outputs](
   "Run all scala compilers with help flags and collect the outputs"
 )
-getOutputs := {
-  downloadScalaCompilerJars.value
 
-  val cacheStore =
-    streams.value.cacheStoreFactory.make("scalac-options-outputs")
-  val runCached  = Cache.cached[Unit, Generator.Outputs](cacheStore) { _ =>
-    Await.result(Generator.getOutputs, Duration.Inf)
+def selectScalaVersions(args: Seq[String]): Seq[Versions.Minor] = {
+  val requested = args.flatMap(_.split(",")).filter(_.nonEmpty)
+  val all       = Versions.versions.flatMap(_.allMinors)
+  if (requested.isEmpty) all
+  else {
+    val allByVersion = all.map(version => version.versionString -> version).toMap
+    val unknown      = requested.filterNot(allByVersion.contains)
+    if (unknown.nonEmpty)
+      sys.error(
+        s"Unknown Scala version(s): ${unknown.mkString(", ")}. " +
+          s"Known versions: ${all.map(_.versionString).mkString(", ")}"
+      )
+    requested.map(allByVersion)
   }
-
-  val outputs = runCached(())
-
-  val dir = streams.value.cacheDirectory
-  for ((version, pages) <- outputs; (flag, output) <- pages)
-    IO.write(dir / version.versionString / (flag + ".txt"), output)
-
-  outputs
 }
 
-val generate = taskKey[Seq[File]]("Generate code")
-generate := {
-  val outputs = getOutputs.value
-
-  val dir    = (Compile / sourceManaged).value / "io" / "github" / "nafg" / "scalacoptions"
+def writeGeneratedCode(sourceManaged: File, outputs: Generator.Outputs): Seq[File] = {
+  val dir    = sourceManaged / "io" / "github" / "nafg" / "scalacoptions"
   val result = Generator.parseAllOutputs(outputs)
   result.allContainers.map { c =>
     val file = dir / "options" / (c.name + ".scala")
@@ -85,10 +83,58 @@ generate := {
   }
 }
 
-Compile / sourceGenerators += generate
+def collectOutputs(selectedVersions: Seq[Versions.Minor], cacheStore: CacheStore): Generator.Outputs = {
+  val runCached = Cache.cached[Seq[String], Generator.Outputs](cacheStore) { _ =>
+    Await.result(Generator.getOutputs(selectedVersions), Duration.Inf)
+  }
+  runCached(selectedVersions.map(_.versionString))
+}
+
+def writeCachedOutputs(cacheDirectory: File, outputs: Generator.Outputs): Unit =
+  for ((version, pages) <- outputs; (flag, output) <- pages)
+    IO.write(cacheDirectory / version.versionString / (flag + ".txt"), output)
+
+getOutputs := {
+  val selectedVersions = selectScalaVersions(Nil)
+  downloadScalaCompilerJars.value
+
+  val cacheStore =
+    streams.value.cacheStoreFactory.make("scalac-options-outputs")
+  val outputs    = collectOutputs(selectedVersions, cacheStore)
+
+  writeCachedOutputs(streams.value.cacheDirectory, outputs)
+
+  outputs
+}
+
+val generate = inputKey[Seq[File]]("Generate code. Optionally pass one or more Scala versions.")
+generate := Def.inputTaskDyn {
+  val args             = spaceDelimited("<scala-version>").parsed
+  val selectedVersions = selectScalaVersions(args)
+
+  if (args.isEmpty)
+    Def.task {
+      writeGeneratedCode((Compile / sourceManaged).value, getOutputs.value)
+    }
+  else
+    Def.task {
+      streams.value.log.info(
+        s"Downloading scala compiler jars for ${selectedVersions.map(_.versionString).mkString(", ")}..."
+      )
+      Await.result(Generator.prefetch(selectedVersions), Duration.Inf)
+      streams.value.log.info("Finished downloading scala compiler jars.")
+
+      val cacheStore = streams.value.cacheStoreFactory.make("scalac-options-outputs")
+      val outputs    = collectOutputs(selectedVersions, cacheStore)
+      writeCachedOutputs(streams.value.cacheDirectory, outputs)
+      writeGeneratedCode((Compile / sourceManaged).value, outputs)
+    }
+}.evaluated
+
+Compile / sourceGenerators += generate.toTask("").taskValue
 
 Compile / packageSrc / mappings ++=
-  generate.value.pair(
+  generate.toTask("").value.pair(
     Path.relativeTo((Compile / sourceManaged).value) | Path.flat
   )
 

@@ -61,8 +61,11 @@ object GetHelpString {
         else "dotty.tools.dotc.Main"
     )
 
-  def fetchAll(versions: Seq[Versions.Epoch]) =
+  def fetchAll(versions: Seq[Versions.Epoch]): Future[Seq[File]] =
+    fetchAllMinors(versions.flatMap(_.allMinors))
+
+  def fetchAllMinors(versions: Seq[Versions.Minor]) =
     Fetch()
-      .addDependencies(versions.flatMap(_.allMinors).map(dependency): _*)
+      .addDependencies(versions.map(dependency): _*)
       .future()
 }
