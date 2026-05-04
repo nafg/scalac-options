@@ -19,7 +19,9 @@ object FastParseParser {
 
   private def settingLineStart[_: P] = P("--" | "-" ~ (CharIn("A-Z") | letters) | "@")
 
-  private def extraLines[_: P] = P((" ".rep(10) ~ spaces ~ !settingLineStart ~ untilLineEnd).rep)
+  // 8-space minimum captures both Scala 3.0+ continuations (typically 22-space indent) and
+  // Scala 3.1/3.2 -Wunused continuations (9-space indent), where the "Choices:" line lives.
+  private def extraLines[_: P] = P((" ".rep(8) ~ spaces ~ !settingLineStart ~ untilLineEnd).rep)
 
   private def letters[_: P] = P(CharsWhile(_.isLetter))
 
@@ -64,6 +66,15 @@ object FastParseParser {
       )
   )
 
+  def nameFor(flagSegments: Seq[FlagSegment]): String = {
+    val words =
+      flagSegments
+        .collect { case FlagSegment.Literal(text) => text }
+        .flatMap(_.split("[:= -]"))
+        .filter(_.nonEmpty)
+    words.head + words.tail.map(_.capitalize).mkString
+  }
+
   private def settingLine[_: P] = P(
     (settingName
       ~ spaces
@@ -71,13 +82,7 @@ object FastParseParser {
         (x.toSeq ++ xs).mkString(" ")
       })
       .map { case (flagSegments, description) =>
-        val words =
-          flagSegments
-            .collect { case FlagSegment.Literal(text) => text }
-            .flatMap(_.split("[:= -]"))
-            .filter(_.nonEmpty)
-        val name  = words.head + words.tail.map(_.capitalize).mkString
-        Setting(name, flagSegments, description)
+        Setting(nameFor(flagSegments), flagSegments, description)
       }
   )
 
@@ -110,6 +115,59 @@ object FastParseParser {
 
   private val ansiRegex = "\u001B\\[[;\\d]*m".r
 
+  private val choicesMarkerRegex = """\bChoices\s*:?\s*""".r
+  private val leadingChoiceName  = """^([a-z][a-z\-]*)""".r
+
+  /** When a Setting's description contains a Scala 3 "Choices" block, replace it with one Setting
+    * per choice. The bare-flag Setting is unusable (scalac requires the choice argument), so it's
+    * dropped.
+    *
+    * Two formats are observed across Scala 3 versions:
+    *   - 3.1 / 3.2: comma-separated bare names ("Choices: nowarn, all.")
+    *   - 3.3+: each choice on its own line prefixed with "- " ("Choices :\n- nowarn,\n- all,\n
+    *     - imports :\n  Warn if ...")
+    *
+    * Detection: presence of "- " in the first ~80 chars after the "Choices" marker selects strict
+    * parsing (only pieces starting with "- " are choices). Otherwise permissive comma-split.
+    * Strict parsing is required for 3.3+ because choice descriptions can contain commas (and
+    * embedded examples like "Enable -Wunused:imports,privates").
+    */
+  def expandChoices(setting: Setting): Seq[Setting] = {
+    val desc = setting.description
+    choicesMarkerRegex.findFirstMatchIn(desc) match {
+      case None    => Seq(setting)
+      case Some(m) =>
+        val mainDesc          = desc.substring(0, m.start).trim
+        val rest              = desc.substring(m.end)
+        val baseFlag          = setting.flagSegments.collect { case FlagSegment.Literal(t) => t }.mkString
+        val hasDashMarkers    = rest.take(80).contains("- ")
+        val candidatePieces   = rest.split(",").iterator.map(_.trim)
+        val choices: List[String] =
+          (if (hasDashMarkers)
+             candidatePieces.flatMap { piece =>
+               if (piece.startsWith("- "))
+                 leadingChoiceName.findFirstMatchIn(piece.stripPrefix("- ").trim).map(_.group(1))
+               else None
+             }
+           else
+             candidatePieces.flatMap { piece =>
+               leadingChoiceName.findFirstMatchIn(piece).map(_.group(1))
+             }
+          ).toList.distinct
+        if (choices.isEmpty) Seq(setting)
+        else
+          choices.map { choice =>
+            val newSegments = Seq(FlagSegment.Literal(s"$baseFlag:$choice"))
+            Setting(
+              name = nameFor(newSegments),
+              flagSegments = newSegments,
+              description = if (mainDesc.isEmpty) s"$baseFlag:$choice" else s"$mainDesc ($choice)",
+              isDeprecated = setting.isDeprecated
+            )
+          }
+    }
+  }
+
   /** @param text
     *   output of scalac help output
     * @return
@@ -120,9 +178,10 @@ object FastParseParser {
     fastparse.parse(textWithoutANSI, parser(_), verboseFailures = true) match {
       case Parsed.Success(groups, index) =>
         val asMap     = groups.toMap.map { case (name, settings) =>
+          val expanded = settings.flatMap(expandChoices)
           if (name.trim == "Deprecated settings:")
-            name         -> settings.map(_.copy(isDeprecated = true))
-          else name.trim -> settings
+            name         -> expanded.map(_.copy(isDeprecated = true))
+          else name.trim -> expanded
         }
         val all       = asMap
         val remaining = textWithoutANSI.drop(index)
