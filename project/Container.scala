@@ -36,12 +36,12 @@ object Container {
   lazy val containerLListIso: IsoLList.Aux[
     Container,
     String :*: Option[Container] :*: Seq[Setting] :*: Boolean :*: LNil
-  ] =
+  ]                                                        =
     LList.iso(
       { case Container(name, parent, settings, isConcrete) =>
-        ("name" -> name) :*:
-          ("parent" -> parent) :*:
-          ("settings" -> settings) :*:
+        ("name"         -> name) :*:
+          ("parent"     -> parent) :*:
+          ("settings"   -> settings) :*:
           ("isConcrete" -> isConcrete) :*:
           LNil
       },

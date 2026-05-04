@@ -19,7 +19,7 @@ object Versions {
     helpFlags: Seq[String],
     settings: Map[String, Seq[FlagSegment]] = Map.empty) {
     lazy val prereleaseString = prerelease.map { case (let, num) => let + num }
-    lazy val versionString =
+    lazy val versionString    =
       s"$epoch.$major.$minor" + prereleaseString.fold("")("-" + _)
 
     override def toString = versionString
@@ -32,10 +32,10 @@ object Versions {
     ] =
       LList.iso(
         { case Minor(epoch, major, minor, prerelease, helpFlags, settings) =>
-          "version" -> (epoch, major, minor) :*:
+          "version"      -> (epoch, major, minor) :*:
             "prerelease" -> prerelease :*:
-            "helpFlags" -> helpFlags :*:
-            "settings" -> settings :*:
+            "helpFlags"  -> helpFlags :*:
+            "settings"   -> settings :*:
             LNil
         },
         { case (_, (epoch, major, minor)) :*: (_, prerelease) :*: (_, helpFlags) :*: (_, settings) :*: LNil =>
@@ -57,13 +57,13 @@ object Versions {
 
   case class VersionConfig(helpFlags: Seq[String], settings: Map[String, Seq[FlagSegment]] = Map.empty)
   object VersionConfig {
-    private implicit val config = Configuration.default.withDefaults
+    private implicit val config                  = Configuration.default.withDefaults
     implicit val decoder: Decoder[VersionConfig] = deriveConfiguredDecoder
   }
   type VersionFile = SortedMap[Int, SortedMap[Int, Map[String, VersionConfig]]]
 
   def versions = {
-    val data =
+    val data  =
       parser.parse(IO.read(file("versions.yaml")))
         .flatMap(Decoder[VersionFile].decodeJson(_))
         .toTry.get

@@ -6,7 +6,7 @@ object CodeGen {
     val params = setting.flagSegments.toList.collect {
       case FlagSegment.Parameter(name) => name
     }
-    val elems = {
+    val elems  = {
       case class State(finished: List[List[FlagSegment]], current: List[FlagSegment])
       val result =
         setting.flagSegments.foldLeft(State(Nil, Nil)) {

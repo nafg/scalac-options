@@ -12,9 +12,9 @@ object FlagSegment {
 
   case class Parameter(name: String) extends FlagSegment
 
-  implicit val literalIsoString: IsoString[Literal] =
+  implicit val literalIsoString: IsoString[Literal]       =
     IsoString.iso(_.text, Literal)
-  implicit val parameterIsoString: IsoString[Parameter] =
+  implicit val parameterIsoString: IsoString[Parameter]   =
     IsoString.iso(_.name, Parameter)
   implicit val flagSegmentFormat: JsonFormat[FlagSegment] =
     flatUnionFormat2[FlagSegment, Literal, Parameter]

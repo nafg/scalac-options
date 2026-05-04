@@ -5,7 +5,7 @@ import scala.concurrent.duration.Duration
 
 
 ThisBuild / crossScalaVersions := Seq("2.12.21", "2.13.18", "3.3.7")
-ThisBuild / scalaVersion := "2.12.21"
+ThisBuild / scalaVersion       := "2.12.21"
 ThisBuild / scalacOptions += "-deprecation"
 
 ThisBuild / organization := "io.github.nafg.scalac-options"
@@ -32,7 +32,7 @@ getOutputs := {
 
   val cacheStore =
     streams.value.cacheStoreFactory.make("scalac-options-outputs")
-  val runCached = Cache.cached[Unit, Generator.Outputs](cacheStore) { _ =>
+  val runCached  = Cache.cached[Unit, Generator.Outputs](cacheStore) { _ =>
     Await.result(Generator.getOutputs, Duration.Inf)
   }
 
@@ -49,7 +49,7 @@ val generate = taskKey[Seq[File]]("Generate code")
 generate := {
   val outputs = getOutputs.value
 
-  val dir = (Compile / sourceManaged).value / "io" / "github" / "nafg" / "scalacoptions"
+  val dir    = (Compile / sourceManaged).value / "io" / "github" / "nafg" / "scalacoptions"
   val result = Generator.parseAllOutputs(outputs)
   result.allContainers.map { c =>
     val file = dir / "options" / (c.name + ".scala")
