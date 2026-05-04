@@ -1,13 +1,11 @@
 import scala.collection.immutable.SortedMap
 
-import io.circe.Decoder
-import io.circe.generic.extras.Configuration
-import io.circe.generic.extras.semiauto.deriveConfiguredDecoder
-import io.circe.yaml.parser
 import sbt.io.IO
 import sbt.io.syntax.file
 import sjsonnew.BasicJsonProtocol.*
 import sjsonnew.{:*:, IsoLList, LList, LNil}
+import zio.json.*
+import zio.json.yaml.*
 
 
 object Versions {
@@ -57,16 +55,23 @@ object Versions {
 
   case class VersionConfig(helpFlags: Seq[String], settings: Map[String, Seq[FlagSegment]] = Map.empty)
   object VersionConfig {
-    private implicit val config                  = Configuration.default.withDefaults
-    implicit val decoder: Decoder[VersionConfig] = deriveConfiguredDecoder
+    implicit val codec: JsonCodec[VersionConfig] = DeriveJsonCodec.gen[VersionConfig]
   }
   type VersionFile = SortedMap[Int, SortedMap[Int, Map[String, VersionConfig]]]
 
+  implicit def sortedMapEncoder[K : JsonFieldEncoder, V : JsonEncoder]: JsonEncoder[SortedMap[K, V]]            =
+    JsonEncoder[Map[K, V]].contramap(identity)
+  implicit def sortedMapDecoder[K : JsonFieldDecoder : Ordering, V : JsonDecoder]: JsonDecoder[SortedMap[K, V]] =
+    JsonDecoder[Map[K, V]].map(m => SortedMap.empty[K, V] ++ m)
+
+  def parseFile(content: String): VersionFile =
+    content.fromYaml[VersionFile] match {
+      case Right(vf) => vf
+      case Left(err) => sys.error(s"Failed to parse versions.yaml: $err")
+    }
+
   def versions = {
-    val data  =
-      parser.parse(IO.read(file("versions.yaml")))
-        .flatMap(Decoder[VersionFile].decodeJson(_))
-        .toTry.get
+    val data  = parseFile(IO.read(file("versions.yaml")))
     val regex = """(\d+)\.\.(\d+)""".r
     for ((epoch, data) <- data.toSeq)
       yield Epoch(
