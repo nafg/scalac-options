@@ -4,6 +4,7 @@ import coursier.core.{Module, ModuleName, Organization}
 import coursier.{Dependency, Fetch}
 
 import java.io.File
+import scala.collection.concurrent.TrieMap
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future, blocking}
 
@@ -17,6 +18,7 @@ object Scalac {
   def dependency(scalaVersion: String): Dependency = {
     val moduleName =
       if (epochOf(scalaVersion) < 3) "scala-compiler"
+      else if (scalaVersion.contains("-")) s"scala3-compiler_$scalaVersion"
       else "scala3-compiler_3"
     Dependency(
       Module(Organization("org.scala-lang"), ModuleName(moduleName), Map.empty),
@@ -28,8 +30,17 @@ object Scalac {
     if (epochOf(scalaVersion) < 3) "scala.tools.nsc.Main"
     else "dotty.tools.dotc.Main"
 
+  private val classpathCache = TrieMap.empty[String, Seq[File]]
+
   def fetchClasspath(scalaVersion: String)(implicit ec: ExecutionContext): Future[Seq[File]] =
-    Fetch().addDependencies(dependency(scalaVersion)).future()
+    classpathCache.get(scalaVersion) match {
+      case Some(files) => Future.successful(files)
+      case None        =>
+        Fetch().addDependencies(dependency(scalaVersion)).future().map { files =>
+          classpathCache.put(scalaVersion, files)
+          files
+        }
+    }
 
   def fetchAllClasspaths(scalaVersions: Seq[String])(implicit ec: ExecutionContext): Future[Seq[File]] =
     Fetch().addDependencies(scalaVersions.map(dependency): _*).future()

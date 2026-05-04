@@ -2,19 +2,15 @@ package io.github.nafg.scalacoptions
 
 import io.github.nafg.scalacoptions.runner.Scalac
 
+import java.lang.reflect.InvocationTargetException
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{Duration, DurationInt}
 
 
-/** Verifies scalac actually accepts the choice-flavoured flags we generate (`Wunused*`, `Wshadow*`).
-  * 0.5.0 shipped `def Wunused = List("-Wunused")` — scalac rejects bare `-Wunused` with
-  * `missing argument for option -Wunused`. The parser fix replaces it with per-choice methods like
-  * `WunusedAll = List("-Wunused:all")`. This test runs each generated nullary `Wunused*`/`Wshadow*`
-  * flag through scalac at the matching Scala 3 version and asserts it isn't rejected.
-  *
-  * Scope is intentionally narrow: only the choice-bearing categories that this PR fixes.
-  * Pre-existing brokenness in other arg-taking methods (`Wconf`, `bootclasspath`, etc.) is out of
-  * scope and not covered here.
+/** For each Scala 3 version, runs every generated nullary `Wunused*`/`Wshadow*` flag through
+  * scalac at the matching version and asserts scalac doesn't report it as invalid. Scope is
+  * intentionally narrow to the choice-bearing categories; pre-existing brokenness in other
+  * arg-taking methods (`Wconf`, `bootclasspath`, ...) is out of scope.
   */
 class ScalacRoundtripSpec extends munit.FunSuite {
   override val munitTimeout: Duration = 30.minutes
@@ -49,7 +45,9 @@ class ScalacRoundtripSpec extends munit.FunSuite {
         try {
           val res = m.invoke(obj).asInstanceOf[List[String]]
           if (res.nonEmpty) Some(name -> res) else None
-        } catch { case _: Throwable => None }
+        } catch {
+          case _: InvocationTargetException | _: IllegalAccessException => None
+        }
       } else None
     }.distinct.sortBy(_._1)
   }

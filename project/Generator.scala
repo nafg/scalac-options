@@ -104,11 +104,9 @@ object Generator {
         println(s"Getting output from $version")
         val pages = blocking {
           version.helpFlags.map { flag =>
-            // Scalac 3.5+ writes help to stdout; earlier 3.x and 2.x write to stderr. Capture both
-            // and concatenate; the parser is permissive about leading/trailing noise.
-            val res  = Scalac.run(version.versionString, flag)
-            val text = res.stderr.trim + (if (res.stderr.nonEmpty) "\n" else "") + res.stdout.trim
-            flag -> text
+            // Scalac 3.5+ writes help to stdout; earlier 3.x and 2.x write to stderr.
+            val res = Scalac.run(version.versionString, flag)
+            flag -> Seq(res.stderr, res.stdout).map(_.trim).filter(_.nonEmpty).mkString("\n")
           }
         }
         println(s"Finished getting output from $version")
