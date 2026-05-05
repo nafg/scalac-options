@@ -1,6 +1,10 @@
+import coursier.core.{Module, ModuleName, Organization}
+import coursier.{Dependency, Fetch}
+
 import scala.collection.immutable.{ListMap, SortedMap}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 
 
@@ -63,25 +67,43 @@ object Generator {
 
   private def versions = Versions.loadVersions()
 
+  private def dependency(version: Versions.Minor) =
+    Dependency(
+      Module(
+        Organization("org.scala-lang"),
+        ModuleName(
+          version match {
+            case Versions.Minor(2, _, _, _, _, _)       => "scala-compiler"
+            case Versions.Minor(3, _, _, Some(_), _, _) => s"scala3-compiler_${version.versionString}"
+            case Versions.Minor(3, _, _, None, _, _)    => "scala3-compiler_3"
+            case _                                      => sys.error("Unsupported version: " + version)
+          }
+        ),
+        Map.empty
+      ),
+      version.versionString
+    )
+
   def prefetch: Future[Unit] = prefetch(versions.flatMap(_.allMinors))
 
-  def prefetch(versions: Seq[Versions.Minor]) = GetHelpString.fetchAllMinors(versions).map(_ => ())
+  def prefetch(versions: Seq[Versions.Minor]) =
+    Fetch()
+      .addDependencies(versions.map(dependency)*)
+      .future().map(_ => ())
 
-  def getOutputs(versions: Seq[Versions.Minor]) =
+  def getOutputs(versions: Seq[Versions.Minor])(runScalac: (Versions.Minor, String) => String) = Await.result(
     Future.traverse(versions) { version =>
       println(s"Getting output from $version")
-      GetHelpString.runner(version)
-        .map { runner =>
-          val res =
-            version -> version.helpFlags.map(flag => flag -> runner(flag))
-          println(s"Finished getting output from $version")
-          res
-        }
+      Future
+        .traverse(version.helpFlags)(flag => Future(runScalac(version, flag)).map(flag -> _))
+        .map(pages => version -> pages)
         .andThen {
-          case Success(_) =>
+          case Success(_) => println(s"Finished getting output from $version")
           case Failure(e) => Console.err.println(s"Failed to get output from $version: ${e.getMessage}")
         }
-    }
+    },
+    Duration.Inf
+  )
 
   type Outputs = Seq[(Versions.Minor, Seq[(String, String)])]
 
