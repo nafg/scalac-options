@@ -4,6 +4,6 @@ libraryDependencies += "com.lihaoyi"                   %% "os-lib"         % "0.
 libraryDependencies += "com.lihaoyi"                   %% "pprint"         % "0.9.6"
 libraryDependencies += "io.get-coursier"               %% "coursier"       % "2.1.24"
 libraryDependencies += "dev.zio"                       %% "zio-json-yaml"  % "0.9.2"
-libraryDependencies += "io.github.nafg.scalac-options" %% "scalac-options" % "0.4.0"
+libraryDependencies += "io.github.nafg.scalac-options" %% "scalac-options" % "0.5.0"
 
 scalacOptions += "-deprecation"
