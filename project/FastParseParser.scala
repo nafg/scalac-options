@@ -19,7 +19,9 @@ object FastParseParser {
 
   private def settingLineStart[_: P] = P("--" | "-" ~ (CharIn("A-Z") | letters) | "@")
 
-  private def extraLines[_: P] = P((" ".rep(10) ~ spaces ~ !settingLineStart ~ untilLineEnd).rep)
+  // 8-space minimum captures both Scala 3.0+ continuations (typically 22-space indent) and
+  // Scala 3.1/3.2 -Wunused continuations (9-space indent), where the "Choices:" line lives.
+  private def extraLines[_: P] = P((" ".rep(8) ~ spaces ~ !settingLineStart ~ untilLineEnd).rep)
 
   private def letters[_: P] = P(CharsWhile(_.isLetter))
 
@@ -64,6 +66,15 @@ object FastParseParser {
       )
   )
 
+  def nameFor(flagSegments: Seq[FlagSegment]): String = {
+    val words =
+      flagSegments
+        .collect { case FlagSegment.Literal(text) => text }
+        .flatMap(_.split("[:= -]"))
+        .filter(_.nonEmpty)
+    words.head + words.tail.map(_.capitalize).mkString
+  }
+
   private def settingLine[_: P] = P(
     (settingName
       ~ spaces
@@ -71,13 +82,7 @@ object FastParseParser {
         (x.toSeq ++ xs).mkString(" ")
       })
       .map { case (flagSegments, description) =>
-        val words =
-          flagSegments
-            .collect { case FlagSegment.Literal(text) => text }
-            .flatMap(_.split("[:= -]"))
-            .filter(_.nonEmpty)
-        val name  = words.head + words.tail.map(_.capitalize).mkString
-        Setting(name, flagSegments, description)
+        Setting(nameFor(flagSegments), flagSegments, description)
       }
   )
 
@@ -110,6 +115,54 @@ object FastParseParser {
 
   private val ansiRegex = "\u001B\\[[;\\d]*m".r
 
+  // --- choices block parsing ---
+  // Scalac help text describes multi-choice flags (-Wunused, -Wshadow, -color, ...) inline:
+  //   3.3+: "Enable or disable specific `unused` warnings Choices :  - nowarn,  - all,  - imports : Warn ..."
+  //   3.1/3.2: "Enable or disable specific `unused` warnings Choices: nowarn, all."
+  // The parser splits this into a leading description plus a list of choice names. The dashed
+  // form must match the full "- name" marker because choice descriptions can contain commas and
+  // embedded examples like "Enable -Wunused:imports,privates" that must NOT be parsed as choices.
+
+  private def lowerLetter[_: P]: P[Unit]     = P(CharPred(c => c >= 'a' && c <= 'z'))
+  private def lowerOrDash[_: P]: P[Unit]     = P(CharPred(c => c >= 'a' && c <= 'z' || c == '-'))
+  private def choiceWord[_: P]: P[String]    = P((lowerLetter ~ lowerOrDash.rep).!)
+
+  private def skipUntilDash[_: P]: P[Unit]   = P((!"- " ~ AnyChar).rep)
+  private def dashedItem[_: P]: P[String]    = P("- " ~ choiceWord)
+  private def dashedChoices[_: P]: P[Seq[String]] =
+    P(skipUntilDash ~ (dashedItem ~ skipUntilDash).rep(1)).map(_.toSeq)
+
+  private def commaSep[_: P]: P[Unit]        = P("," ~ " ".rep)
+  private def bareChoices[_: P]: P[Seq[String]] =
+    P(choiceWord.rep(min = 1, sep = commaSep))
+
+  private def beforeMarker[_: P]: P[String]  = P((!"Choices" ~ AnyChar).rep.!)
+  private def marker[_: P]: P[Unit]          = P("Choices" ~ ":".? ~ " ".rep)
+  private def descWithChoices[_: P]: P[(String, Seq[String])] =
+    P(beforeMarker ~ marker ~ (dashedChoices | bareChoices))
+
+  /** When a Setting's description contains a "Choices" block, replace it with one Setting per
+    * choice. The bare-flag Setting is unusable (scalac requires the choice argument), so it's
+    * dropped.
+    */
+  def expandChoices(setting: Setting): Seq[Setting] =
+    fastparse.parse(setting.description, descWithChoices(_)) match {
+      case Parsed.Success((mainDesc, names), _) if names.nonEmpty =>
+        val baseFlag = setting.flagSegments.collect { case FlagSegment.Literal(t) => t }.mkString
+        names.distinct.map { choice =>
+          val newSegments = Seq(FlagSegment.Literal(s"$baseFlag:$choice"))
+          Setting(
+            name = nameFor(newSegments),
+            flagSegments = newSegments,
+            description =
+              if (mainDesc.trim.isEmpty) s"$baseFlag:$choice"
+              else s"${mainDesc.trim} ($choice)",
+            isDeprecated = setting.isDeprecated
+          )
+        }
+      case _                                                      => Seq(setting)
+    }
+
   /** @param text
     *   output of scalac help output
     * @return
@@ -120,9 +173,10 @@ object FastParseParser {
     fastparse.parse(textWithoutANSI, parser(_), verboseFailures = true) match {
       case Parsed.Success(groups, index) =>
         val asMap     = groups.toMap.map { case (name, settings) =>
+          val expanded = settings.flatMap(expandChoices)
           if (name.trim == "Deprecated settings:")
-            name         -> settings.map(_.copy(isDeprecated = true))
-          else name.trim -> settings
+            name         -> expanded.map(_.copy(isDeprecated = true))
+          else name.trim -> expanded
         }
         val all       = asMap
         val remaining = textWithoutANSI.drop(index)

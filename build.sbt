@@ -154,3 +154,18 @@ Compile / packageSrc / mappings ++=
 
 libraryDependencies += ("io.get-coursier" %% "coursier-core" % "2.1.24")
   .cross(CrossVersion.for3Use2_13)
+
+libraryDependencies += "org.scalameta" %% "munit" % "1.1.1" % Test
+
+lazy val runner = (project in file("runner"))
+  .settings(
+    name                := "scalac-options-runner",
+    publish / skip      := true,
+    libraryDependencies ++= Seq(
+      ("io.get-coursier" %% "coursier" % "2.1.24").cross(CrossVersion.for3Use2_13),
+      "com.lihaoyi"      %% "os-lib"   % "0.11.8"
+    )
+  )
+
+lazy val library = (project in file("."))
+  .dependsOn(runner % Test)
