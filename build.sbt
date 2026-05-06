@@ -123,7 +123,8 @@ lazy val library = (project in file("."))
   .dependsOn(launcher % Test)
   .settings(
     libraryDependencies ++= Seq(
-      ("io.get-coursier" %% "coursier-core" % "2.1.24").cross(CrossVersion.for3Use2_13)
+      ("io.get-coursier" %% "coursier-core" % "2.1.24").cross(CrossVersion.for3Use2_13),
+      "org.scalameta"    %% "munit"         % "1.3.0" % Test
     ),
 
     updateVersions       := runVersionUpdater(streams.value.log, dryRun = false),
