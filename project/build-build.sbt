@@ -7,3 +7,5 @@ libraryDependencies += "dev.zio"                       %% "zio-json-yaml"  % "0.
 libraryDependencies += "io.github.nafg.scalac-options" %% "scalac-options" % "0.5.0"
 
 scalacOptions += "-deprecation"
+scalacOptions += "-Xlint:_"
+scalacOptions += "-Ywarn-unused:-imports"
