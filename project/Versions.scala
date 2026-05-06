@@ -3,8 +3,6 @@ import scala.collection.immutable.SortedMap
 import Versions.VersionConfig.PatchRange
 import sbt.io.IO
 import sbt.io.syntax.file
-import sjsonnew.BasicJsonProtocol.*
-import sjsonnew.{:*:, IsoLList, LList, LNil}
 import zio.json.*
 import zio.json.yaml.*
 
@@ -25,23 +23,6 @@ object Versions {
   }
 
   object Minor {
-    implicit val minorLListIso: IsoLList.Aux[
-      Minor,
-      (Int, Int, Int) :*: Option[(String, Int)] :*: Seq[String] :*: Map[String, Seq[FlagSegment]] :*: LNil
-    ] =
-      LList.iso(
-        { case Minor(epoch, major, minor, prerelease, helpFlags, settings) =>
-          "version"      -> (epoch, major, minor) :*:
-            "prerelease" -> prerelease :*:
-            "helpFlags"  -> helpFlags :*:
-            "settings"   -> settings :*:
-            LNil
-        },
-        { case (_, (epoch, major, minor)) :*: (_, prerelease) :*: (_, helpFlags) :*: (_, settings) :*: LNil =>
-          Minor(epoch, major, minor, prerelease, helpFlags, settings)
-        }
-      )
-
     implicit val ordering: Ordering[Minor] =
       Ordering.by { case Minor(epoch, major, minor, prerelease, _, _) =>
         (epoch, major, minor, prerelease.getOrElse("" -> 0))

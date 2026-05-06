@@ -96,15 +96,24 @@ lazy val launcher =
         val scalaRunner   = (Compile / runner).value
         val mainClassName = (Compile / mainClass).value.getOrElse(sys.error("No main class found in scalacRunner"))
 
+        val baseCacheStoreFactory = streams.value.cacheStoreFactory
+
         { (version, flag) =>
-          blocking {
-            val tempFile = os.temp(prefix = "scalac-out", suffix = ".txt")
-            try {
-              scalaRunner.run(mainClassName, cp, Seq(tempFile.toString(), version.versionString, flag), log).get
-              os.read(tempFile)
-            } finally
-              os.remove(tempFile)
-          }
+          val cacheStoreFactory = baseCacheStoreFactory.sub(version.versionString).sub(flag)
+          val cacheStore        = cacheStoreFactory.make("scalac-options-output.json")
+          val cached            =
+            Cache.cached[Unit, String](cacheStore) { _ =>
+              blocking {
+                val tempFile = os.temp(prefix = "scalac-out", suffix = ".txt")
+                try {
+                  scalaRunner.run(mainClassName, cp, Seq(tempFile.toString(), version.versionString, flag), log).get
+                  os.read(tempFile)
+                } finally
+                  os.remove(tempFile)
+              }
+            }
+
+          cached(())
         }
       }
     )
@@ -125,19 +134,11 @@ lazy val library = (project in file("."))
       val selectedVersions = selectScalaVersions(args)
 
       Def.task {
-        val cacheStore  = streams.value.cacheStoreFactory.make("scalac-options-outputs")
-        val runLauncher = (launcher / runScalacFn).value
-        val runCached   =
-          Cache.cached[Seq[Versions.Minor], Generator.Outputs](cacheStore) { versions =>
-            streams.value.log.info(
-              s"Downloading scala compiler jars for ${versions.map(_.versionString).mkString(", ")}..."
-            )
-            val res = Generator.getOutputs(versions)(runLauncher)
-            streams.value.log.info("Finished downloading scala compiler jars.")
-            res
-          }
+        val versionsString = selectedVersions.map(_.versionString).mkString(", ")
+        streams.value.log.info(s"Getting compiler help texts for $versionsString...")
+        val outputs        = Generator.getOutputs(selectedVersions)((launcher / runScalacFn).value)
+        streams.value.log.info("Finished collecting compiler help texts.")
 
-        val outputs = runCached(selectedVersions)
         writeGeneratedCode((Compile / sourceManaged).value, outputs)
       }
     }.evaluated,
