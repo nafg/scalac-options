@@ -1,11 +1,11 @@
-import sbt.util.CacheImplicits._
-import sbt.util.CacheStore
-import sbt.complete.DefaultParsers.spaceDelimited
+import scala.concurrent.duration.*
+import scala.concurrent.Await
 
 import _root_.io.github.nafg.scalacoptions.{ScalacOptions, options}
 
-import scala.concurrent.Await
-import scala.concurrent.duration.*
+import sbt.complete.DefaultParsers.spaceDelimited
+import sbt.util.CacheImplicits._
+import sbt.util.CacheStore
 
 
 ThisBuild / crossScalaVersions := Seq("2.12.21", "2.13.18", "3.3.7")
