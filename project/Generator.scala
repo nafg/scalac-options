@@ -3,9 +3,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-import sjsonnew.*
-import sjsonnew.BasicJsonProtocol.*
-
 
 object Generator {
   lazy val parser = FastParseParser
@@ -63,28 +60,6 @@ object Generator {
       )
 
   case class Result(allContainers: Seq[Container], versionMap: ListMap[String, String])
-
-  object Result {
-    implicit def listMapFormat[K, V](
-      implicit
-      seqFormat: JsonFormat[Seq[(K, V)]]): JsonFormat[ListMap[K, V]] =
-      new JsonFormat[ListMap[K, V]] {
-        override def write[J](obj: ListMap[K, V], builder: Builder[J]): Unit           =
-          seqFormat.write(obj.toSeq, builder)
-        override def read[J](jsOpt: Option[J], unbuilder: Unbuilder[J]): ListMap[K, V] =
-          ListMap(seqFormat.read(jsOpt, unbuilder): _*)
-      }
-
-    implicit val resultLListIso: IsoLList.Aux[Result, Seq[Container] :*: ListMap[String, String] :*: LNil] =
-      LList.iso(
-        { case Result(allContainers, versionMap) =>
-          ("allContainers" -> allContainers) :*: ("versionMap" -> versionMap) :*: LNil
-        },
-        { case (_, allContainers) :*: (_, versionMap) :*: LNil =>
-          Result(allContainers, versionMap)
-        }
-      )
-  }
 
   private def versions = Versions.loadVersions()
 
