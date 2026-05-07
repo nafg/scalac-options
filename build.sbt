@@ -1,12 +1,11 @@
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.*
-import scala.concurrent.Await
+import scala.concurrent.{Await, blocking}
 
 import _root_.io.github.nafg.scalacoptions.{ScalacOptions, options}
 
 import sbt.complete.DefaultParsers.spaceDelimited
 import sbt.util.CacheImplicits._
-import sbt.util.CacheStore
 
 
 ThisBuild / crossScalaVersions := Seq("2.12.21", "2.13.18", "3.3.7")
@@ -26,25 +25,14 @@ useReadableConsoleGit
 def runVersionUpdater(log: sbt.util.Logger, dryRun: Boolean): Unit =
   log.info(Await.result(new VersionUpdater().run(dryRun = dryRun), 5.minutes))
 
-val updateVersions =
-  taskKey[Unit]("Update versions.yaml with latest Scala patch releases from Maven Central")
-updateVersions := runVersionUpdater(streams.value.log, dryRun = false)
-
-val updateVersionsDryRun =
-  taskKey[Unit]("Check for new Scala versions without modifying versions.yaml")
-updateVersionsDryRun := runVersionUpdater(streams.value.log, dryRun = true)
-
-val downloadScalaCompilerJars =
-  taskKey[Unit]("Download all scala compiler jars")
-downloadScalaCompilerJars := {
-  streams.value.log.info("Downloading all scala compiler jars...")
-  Await.result(Generator.prefetch, Duration.Inf)
-  streams.value.log.info("Finished downloading all scala compiler jars...")
-}
-
-val getOutputs = taskKey[Generator.Outputs](
-  "Run all scala compilers with help flags and collect the outputs"
+val updateVersions            = taskKey[Unit]("Update versions.yaml with latest Scala releases from Maven Central")
+val updateVersionsDryRun      = taskKey[Unit]("Check for new Scala versions without modifying versions.yaml")
+val downloadScalaCompilerJars = taskKey[Unit]("Download all scala compiler jars")
+val getOutputs                = taskKey[Generator.Outputs]("Run all scala compilers with help flags & get the outputs")
+val runScalacFn               = taskKey[(Versions.Minor, String) => String](
+  "Function that runs scalac for a given version + flag, returning combined stdout+stderr"
 )
+val generate                  = inputKey[Seq[File]]("Generate code. Optionally pass one or more Scala versions.")
 
 def selectScalaVersions(args: Seq[String]): Seq[Versions.Minor] = {
   val requested = args.flatMap(_.split(",")).filter(_.nonEmpty)
@@ -96,60 +84,104 @@ def writeGeneratedCode(sourceManaged: File, outputs: Generator.Outputs): Seq[Fil
   }
 }
 
-def collectOutputs(selectedVersions: Seq[Versions.Minor], cacheStore: CacheStore): Generator.Outputs = {
-  val runCached = Cache.cached[Seq[String], Generator.Outputs](cacheStore) { _ =>
-    Await.result(Generator.getOutputs(selectedVersions), Duration.Inf)
-  }
-  runCached(selectedVersions.map(_.versionString))
-}
+lazy val launcher =
+  project
+    .settings(
+      publish / skip := true,
+      libraryDependencies ++= Seq(
+        ("io.get-coursier" %% "coursier" % "2.1.24").cross(CrossVersion.for3Use2_13),
+        "com.lihaoyi"      %% "os-lib"   % "0.11.8"
+      ),
+      runScalacFn    := {
+        val log           = streams.value.log
+        val cp            = (Compile / fullClasspath).value.files
+        val scalaRunner   = (Compile / runner).value
+        val mainClassName = (Compile / mainClass).value.getOrElse(sys.error("No main class found in scalacRunner"))
+
+        val cacheStore = streams.value.cacheStoreFactory.make("scalac-options-output.json")
+        val cached     =
+          Cache.cached[(Versions.Minor, String), String](cacheStore) { case (version, flag) =>
+            blocking {
+              val tempFile = os.temp(prefix = "scalac-out", suffix = ".txt")
+              try {
+                scalaRunner.run(mainClassName, cp, Seq(tempFile.toString(), version.versionString, flag), log).get
+                os.read(tempFile)
+              } finally
+                os.remove(tempFile)
+            }
+          }
+
+        Function.untupled(cached)
+      }
+    )
 
 def writeCachedOutputs(cacheDirectory: File, outputs: Generator.Outputs): Unit =
   for ((version, pages) <- outputs; (flag, output) <- pages)
     IO.write(cacheDirectory / version.versionString / (flag + ".txt"), output)
 
-getOutputs := {
-  val selectedVersions = selectScalaVersions(Nil)
-  downloadScalaCompilerJars.value
+lazy val library = (project in file("."))
+  .dependsOn(launcher % Test)
+  .settings(
+    libraryDependencies ++= Seq(
+      ("io.get-coursier" %% "coursier-core" % "2.1.24").cross(CrossVersion.for3Use2_13),
+      "org.scalameta"    %% "munit"         % "1.3.0" % Test
+    ),
 
-  val cacheStore =
-    streams.value.cacheStoreFactory.make("scalac-options-outputs")
-  val outputs    = collectOutputs(selectedVersions, cacheStore)
+    updateVersions       := runVersionUpdater(streams.value.log, dryRun = false),
+    updateVersionsDryRun := runVersionUpdater(streams.value.log, dryRun = true),
 
-  writeCachedOutputs(streams.value.cacheDirectory, outputs)
+    downloadScalaCompilerJars := {
+      streams.value.log.info("Downloading all scala compiler jars...")
+      Await.result(Generator.prefetch, Duration.Inf)
+      streams.value.log.info("Finished downloading all scala compiler jars...")
+    },
 
-  outputs
-}
+    getOutputs := {
+      val selectedVersions = selectScalaVersions(Nil)
+      downloadScalaCompilerJars.value
 
-val generate = inputKey[Seq[File]]("Generate code. Optionally pass one or more Scala versions.")
-generate := Def.inputTaskDyn {
-  val args             = spaceDelimited("<scala-version>").parsed
-  val selectedVersions = selectScalaVersions(args)
+      val cacheStore  = streams.value.cacheStoreFactory.make("scalac-options-outputs")
+      val runLauncher = (launcher / runScalacFn).value
+      val runCached   =
+        Cache.cached[Seq[Versions.Minor], Generator.Outputs](cacheStore)(Generator.getOutputs(_)(runLauncher))
 
-  if (args.isEmpty)
-    Def.task {
-      writeGeneratedCode((Compile / sourceManaged).value, getOutputs.value)
-    }
-  else
-    Def.task {
-      streams.value.log.info(
-        s"Downloading scala compiler jars for ${selectedVersions.map(_.versionString).mkString(", ")}..."
-      )
-      Await.result(Generator.prefetch(selectedVersions), Duration.Inf)
-      streams.value.log.info("Finished downloading scala compiler jars.")
+      val outputs = runCached(selectedVersions)
 
-      val cacheStore = streams.value.cacheStoreFactory.make("scalac-options-outputs")
-      val outputs    = collectOutputs(selectedVersions, cacheStore)
       writeCachedOutputs(streams.value.cacheDirectory, outputs)
-      writeGeneratedCode((Compile / sourceManaged).value, outputs)
-    }
-}.evaluated
 
-Compile / sourceGenerators += generate.toTask("").taskValue
+      outputs
+    },
 
-Compile / packageSrc / mappings ++=
-  generate.toTask("").value.pair(
-    Path.relativeTo((Compile / sourceManaged).value) | Path.flat
+    generate := Def.inputTaskDyn {
+      val args             = spaceDelimited("<scala-version>").parsed
+      val selectedVersions = selectScalaVersions(args)
+
+      if (args.isEmpty)
+        Def.task {
+          writeGeneratedCode((Compile / sourceManaged).value, getOutputs.value)
+        }
+      else
+        Def.task {
+          streams.value.log.info(
+            s"Downloading scala compiler jars for ${selectedVersions.map(_.versionString).mkString(", ")}..."
+          )
+          Await.result(Generator.prefetch(selectedVersions), Duration.Inf)
+          streams.value.log.info("Finished downloading scala compiler jars.")
+
+          val cacheStore  = streams.value.cacheStoreFactory.make("scalac-options-outputs")
+          val runLauncher = (launcher / runScalacFn).value
+          val runCached   =
+            Cache.cached[Seq[Versions.Minor], Generator.Outputs](cacheStore)(Generator.getOutputs(_)(runLauncher))
+
+          val outputs = runCached(selectedVersions)
+          writeGeneratedCode((Compile / sourceManaged).value, outputs)
+        }
+    }.evaluated,
+
+    Compile / sourceGenerators += generate.toTask("").taskValue,
+
+    Compile / packageSrc / mappings ++=
+      generate.toTask("").value.pair(
+        Path.relativeTo((Compile / sourceManaged).value) | Path.flat
+      )
   )
-
-libraryDependencies += ("io.get-coursier" %% "coursier-core" % "2.1.24")
-  .cross(CrossVersion.for3Use2_13)
