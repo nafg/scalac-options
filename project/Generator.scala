@@ -92,9 +92,6 @@ object Generator {
 
   def prefetch(versions: Seq[Versions.Minor]) = GetHelpString.fetchAllMinors(versions).map(_ => ())
 
-  def getOutputs: Future[Outputs] =
-    getOutputs(versions.flatMap(_.allMinors))
-
   def getOutputs(versions: Seq[Versions.Minor]) =
     Future.traverse(versions) { version =>
       println(s"Getting output from $version")
