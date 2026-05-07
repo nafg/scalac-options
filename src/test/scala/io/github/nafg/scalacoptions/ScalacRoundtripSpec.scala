@@ -42,13 +42,13 @@ class ScalacRoundtripSpec extends munit.FunSuite {
 
   test("-Wunused produces valid flags") {
     assertAccepted { version =>
-      ScalacOptions.all(version)((opts: options.V3_1) => opts.Wunused)
+      ScalacOptions.all(version)((opts: options.V3_3) => opts.Wunused("all"))
     }
   }
 
   test("-Wshadow produces valid flags") {
     assertAccepted { version =>
-      ScalacOptions.all(version)((opts: options.V3_4_2_+) => opts.Wshadow)
+      ScalacOptions.all(version)((opts: options.V3_4_2_+) => opts.Wshadow("all"))
     }
   }
 }
