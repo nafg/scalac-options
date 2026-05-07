@@ -149,7 +149,7 @@ object Generator {
             s"V${epoch}_${major}_$minor" + version.prereleaseString.fold("")("_" + _) + "_+"
           map + (version -> Container(name, Some(parent), settings, isConcrete = false))
       }
-    val concreteContainers = ListMap(allSettings: _*).transform {
+    val concreteContainers = ListMap(allSettings*).transform {
       case (version @ Versions.Minor(epoch, major, minor, _, _, _), settings) =>
         val parent = rangeContainers(version)
         val name   = s"V${epoch}_${major}_$minor" + version.prereleaseString.fold("")("_" + _)

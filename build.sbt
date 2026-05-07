@@ -1,11 +1,12 @@
-import sbt.util.CacheImplicits._
-import sbt.util.CacheStore
-import sbt.complete.DefaultParsers.spaceDelimited
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.*
+import scala.concurrent.Await
 
 import _root_.io.github.nafg.scalacoptions.{ScalacOptions, options}
 
-import scala.concurrent.Await
-import scala.concurrent.duration.*
+import sbt.complete.DefaultParsers.spaceDelimited
+import sbt.util.CacheImplicits._
+import sbt.util.CacheStore
 
 
 ThisBuild / crossScalaVersions := Seq("2.12.21", "2.13.18", "3.3.7")
@@ -22,10 +23,8 @@ ThisBuild / versionScheme := Some("early-semver")
 // (NoWorkTreeException on load). Shell out to the `git` CLI instead. See sbt/sbt#2323.
 useReadableConsoleGit
 
-def runVersionUpdater(log: sbt.util.Logger, dryRun: Boolean): Unit = {
-  import scala.concurrent.ExecutionContext.Implicits.global
+def runVersionUpdater(log: sbt.util.Logger, dryRun: Boolean): Unit =
   log.info(Await.result(new VersionUpdater().run(dryRun = dryRun), 5.minutes))
-}
 
 val updateVersions =
   taskKey[Unit]("Update versions.yaml with latest Scala patch releases from Maven Central")
