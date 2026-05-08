@@ -7,7 +7,7 @@ import io.github.nafg.scalacoptions.launcher.Scalac
 import munit.{Clue, Location}
 
 
-class ScalacRoundtripSpec extends munit.FunSuite {
+class OptionsAcceptanceSpec extends munit.FunSuite {
   override val munitTimeout = 30.minutes
 
   private val rejectionMarkers = List(
