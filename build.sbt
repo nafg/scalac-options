@@ -121,6 +121,7 @@ lazy val launcher =
 lazy val library = (project in file("."))
   .dependsOn(launcher % Test)
   .settings(
+    name := "scalac-options",
     libraryDependencies ++= Seq(
       ("io.get-coursier" %% "coursier-core" % "2.1.24").cross(CrossVersion.for3Use2_13),
       "org.scalameta"    %% "munit"         % "1.3.0" % Test
