@@ -7,7 +7,7 @@ The primary build definition lives in `build.sbt`, with release automation in `c
 - `sbt compile` – compile the library; option traits are produced as a sourceGenerator step.
 - `sbt test` – run the test suite (currently `src/test/scala/io/github/nafg/scalacoptions/`); use `+test` to run across the cross-build (Scala 2.12 / 2.13 / 3.3).
 
-`updateVersions` and `generate` run automatically (via GitHub Actions or sourceGenerator) and shouldn't be invoked by hand.
+`updateVersions`, `launcher/regenerateScalacHelp`, and `generate` run automatically (via GitHub Actions or sourceGenerator) and shouldn't be invoked by hand.
 
 ## Coding Style & Naming Conventions
 Follow the `.scalafmt.conf` preset (IntelliJ style, 120-column limit, two-space indents). Format changes with a scalafmt-enabled editor or CLI before committing. Stick to CamelCase for Scala classes/traits (`Container`, `FlagSegment`) and lowerCamelCase for vals/defs. When adding options, mirror the existing naming in `project/Setting.scala` so generated identifiers remain predictable.

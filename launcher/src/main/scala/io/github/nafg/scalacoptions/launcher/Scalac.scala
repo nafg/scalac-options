@@ -43,7 +43,9 @@ object Scalac {
 
   def main(args: Array[String]): Unit = args match {
     case Array(outPath, scalaVersion, scalacArgs @ _*) =>
-      run(scalaVersion, os.Path(outPath), scalacArgs: _*)
+      val path = os.Path(outPath)
+      os.makeDir.all(path / os.up)
+      run(scalaVersion, path, scalacArgs: _*)
     case _                                             =>
       sys.error(s"Expected args: <output path> <scala version> <scalac arg>*")
   }
