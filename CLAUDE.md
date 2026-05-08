@@ -14,7 +14,7 @@ The library itself cross-builds on Scala 2.12 / 2.13 / 3.3 (see `build.sbt` for 
 - `sbt updateVersions` - Query Maven Central and extend top-most ranges in versions.yaml for new patch releases
 - `sbt updateVersionsDryRun` - Same as above but does not modify the file
 - `sbt generate` - Regenerate option traits under `target/scala-*/src_managed/io/github/nafg/scalacoptions` (fetches compilers and runs `scalac -help` lazily; results are cached per `(version, flag)`)
-- `sbt test` - Run tests
+- `sbt test` - Run tests; `sbt +test` to cross-build against all Scala versions
 
 ## Architecture
 
