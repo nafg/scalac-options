@@ -1,11 +1,12 @@
+import java.util.concurrent.atomic.AtomicInteger
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.*
-import scala.concurrent.{Await, blocking}
+import scala.concurrent.{Await, Future, blocking}
 
 import _root_.io.github.nafg.scalacoptions.{ScalacOptions, options}
 
 import sbt.complete.DefaultParsers.spaceDelimited
-import sbt.util.CacheImplicits._
 
 
 ThisBuild / crossScalaVersions := Seq("2.12.21", "2.13.18", "3.3.7")
@@ -25,12 +26,13 @@ useReadableConsoleGit
 def runVersionUpdater(log: sbt.util.Logger, dryRun: Boolean): Unit =
   log.info(Await.result(new VersionUpdater().run(dryRun = dryRun), 5.minutes))
 
+val scalacHelpDir        = settingKey[os.Path]("Directory holding committed scalac help-text files")
 val updateVersions       = taskKey[Unit]("Update versions.yaml with latest Scala releases from Maven Central")
 val updateVersionsDryRun = taskKey[Unit]("Check for new Scala versions without modifying versions.yaml")
-val runScalacFn          = taskKey[(Versions.Minor, String) => String](
-  "Function that runs scalac for a given version + flag, returning combined stdout+stderr"
-)
+val regenerateScalacHelp = taskKey[Unit]("Regenerate files in scalac-help/")
 val generate             = inputKey[Seq[File]]("Generate code. Optionally pass one or more Scala versions.")
+
+ThisBuild / scalacHelpDir := os.Path((ThisBuild / baseDirectory).value) / "scalac-help"
 
 def selectScalaVersions(args: Seq[String]): Seq[Versions.Minor] = {
   val requested = args.flatMap(_.split(",")).filter(_.nonEmpty)
@@ -85,36 +87,39 @@ def writeGeneratedCode(sourceManaged: File, outputs: Generator.Outputs): Seq[Fil
 lazy val launcher =
   project
     .settings(
-      publish / skip := true,
+      publish / skip       := true,
       libraryDependencies ++= Seq(
         ("io.get-coursier" %% "coursier" % "2.1.24").cross(CrossVersion.for3Use2_13),
         "com.lihaoyi"      %% "os-lib"   % "0.11.8"
       ),
-      runScalacFn    := {
+      regenerateScalacHelp := {
         val log           = streams.value.log
         val cp            = (Compile / fullClasspath).value.files
         val scalaRunner   = (Compile / runner).value
-        val mainClassName = (Compile / mainClass).value.getOrElse(sys.error("No main class found in scalacRunner"))
+        val mainClassName = (Compile / mainClass).value.getOrElse(sys.error("No main class in launcher"))
+        val helpDir       = scalacHelpDir.value
 
-        val baseCacheStoreFactory = streams.value.cacheStoreFactory
+        os.remove.all(helpDir)
 
-        { (version, flag) =>
-          val cacheStoreFactory = baseCacheStoreFactory.sub(version.versionString).sub(flag)
-          val cacheStore        = cacheStoreFactory.make("scalac-options-output.json")
-          val cached            =
-            Cache.cached[Unit, String](cacheStore) { _ =>
+        val all =
+          for {
+            version <- Versions.loadVersions().flatMap(_.allMinors)
+            flag    <- version.helpFlags
+          } yield (version, flag, Generator.scalacHelpFile(helpDir, version, flag))
+
+        val completed = new AtomicInteger(0)
+        log.info(s"Generating ${all.size} scalac-help files...")
+        Await.result(
+          Future.traverse(all) { case (version, flag, outFile) =>
+            Future {
               blocking {
-                val tempFile = os.temp(prefix = "scalac-out", suffix = ".txt")
-                try {
-                  scalaRunner.run(mainClassName, cp, Seq(tempFile.toString(), version.versionString, flag), log).get
-                  os.read(tempFile)
-                } finally
-                  os.remove(tempFile)
+                scalaRunner.run(mainClassName, cp, Seq(outFile.toString(), version.versionString, flag), log).get
               }
+              log.info(s"[${completed.incrementAndGet()}/${all.size}] $version $flag")
             }
-
-          cached(())
-        }
+          },
+          Duration.Inf
+        )
       }
     )
 
@@ -136,10 +141,8 @@ lazy val library = (project in file("."))
 
       Def.task {
         val versionsString = selectedVersions.map(_.versionString).mkString(", ")
-        streams.value.log.info(s"Getting compiler help texts for $versionsString...")
-        val outputs        = Generator.getOutputs(selectedVersions)((launcher / runScalacFn).value)
-        streams.value.log.info("Finished collecting compiler help texts.")
-
+        streams.value.log.info(s"Reading compiler help texts for $versionsString...")
+        val outputs        = Generator.getOutputs(selectedVersions, scalacHelpDir.value)
         writeGeneratedCode((Compile / sourceManaged).value, outputs)
       }
     }.evaluated,
