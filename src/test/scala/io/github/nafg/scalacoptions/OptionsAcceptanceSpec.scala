@@ -41,25 +41,47 @@ class OptionsAcceptanceSpec extends munit.FunSuite {
       }
     }
 
-  private def acceptanceTest(name: String)(fs: VersionOptionsFunction*)(implicit location: Location): Unit =
-    test(s"$name produces valid flags") {
-      assertAccepted(version => ScalacOptions.all(version)(fs: _*))
+  test("-deprecation, -feature") {
+    assertAccepted { version =>
+      ScalacOptions.all(version)((opts: options.Common) => opts.deprecation ++ opts.feature)
     }
+  }
 
-  acceptanceTest("Common.deprecation ++ feature")(
-    (opts: options.Common) => opts.deprecation ++ opts.feature
-  )
-  acceptanceTest("V2.unchecked")((_: options.V2).unchecked)
-  acceptanceTest("V3_0.unchecked")((_: options.V3_0).unchecked)
-  acceptanceTest("V3_1.unchecked")((_: options.V3_1).unchecked)
-  acceptanceTest("V3_2.unchecked")((_: options.V3_2).unchecked)
-  acceptanceTest("V3_3.unchecked")((_: options.V3_3).unchecked)
-  acceptanceTest("V3_4.unchecked")((_: options.V3_4).unchecked)
-  acceptanceTest("V3_5_0.unchecked")((_: options.V3_5_0).unchecked)
-  acceptanceTest("V2_13.Xlint(\"_\")")((_: options.V2_13).Xlint("_"))
-  acceptanceTest("V3_3.Wunused(\"all\")")((opts: options.V3_3) => opts.Wunused("all"))
-  acceptanceTest("V3_4_2_+.Wshadow(\"all\")")((opts: options.V3_4_2_+) => opts.Wshadow("all"))
-  acceptanceTest("WarningsConfig lint-byname-implicit silent")(
-    WarningsConfig(Filter.Category(Category.`lint-byname-implicit`).silent)
-  )
+  test("-unchecked") {
+    assertAccepted { version =>
+      ScalacOptions.all(version)(
+        (_: options.V2).unchecked,
+        (_: options.V3_0).unchecked,
+        (_: options.V3_1).unchecked,
+        (_: options.V3_2).unchecked,
+        (_: options.V3_3).unchecked,
+        (_: options.V3_4).unchecked,
+        (_: options.V3_5_0).unchecked
+      )
+    }
+  }
+
+  test("-Xlint") {
+    assertAccepted { version =>
+      ScalacOptions.all(version)((_: options.V2_13).Xlint("_"))
+    }
+  }
+
+  test("-Wunused") {
+    assertAccepted { version =>
+      ScalacOptions.all(version)((opts: options.V3_3) => opts.Wunused("all"))
+    }
+  }
+
+  test("-Wshadow") {
+    assertAccepted { version =>
+      ScalacOptions.all(version)((opts: options.V3_4_2_+) => opts.Wshadow("all"))
+    }
+  }
+
+  test("-Wconf") {
+    assertAccepted { version =>
+      ScalacOptions.all(version)(WarningsConfig(Filter.Category(Category.`lint-byname-implicit`).silent))
+    }
+  }
 }
