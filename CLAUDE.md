@@ -10,11 +10,10 @@ The library itself cross-builds on Scala 2.12 / 2.13 / 3.3 (see `build.sbt` for 
 
 ## Build Commands
 
-- `sbt compile` - Compile the generator and generated sources
-- `sbt updateVersions` - Query Maven Central and extend top-most ranges in versions.yaml for new patch releases
-- `sbt updateVersionsDryRun` - Same as above but does not modify the file
-- `sbt generate` - Regenerate option traits under `target/scala-*/src_managed/io/github/nafg/scalacoptions` (fetches compilers and runs `scalac -help` lazily; results are cached per `(version, flag)`)
+- `sbt compile` - Compile the library (generated sources are produced as a sourceGenerator step)
 - `sbt test` - Run tests; `sbt +test` to cross-build against all Scala versions
+
+`updateVersions` (extends versions.yaml from Maven Central) and `generate` (the sourceGenerator) run automatically — via GitHub Actions or `sbt compile` — and shouldn't be invoked by hand.
 
 ## Architecture
 
@@ -66,17 +65,9 @@ Generated traits go to `target/.../src_managed/` and are included as managed sou
 
 ## Development Workflow
 
-### Adding a New Scala Version
-
-1. Update `versions.yaml` with the new version range and help flags. For new patches in an existing major series, prefer `sbt updateVersionsDryRun` / `sbt updateVersions` to extend the top-most range automatically. New major series (e.g., 3.8) still need to be added by hand.
-2. Run `sbt generate` to regenerate option traits (compiler JARs are fetched lazily by the launcher)
-3. Review the git diff to verify new options were added correctly
-
 ### Modifying Option Parsing
 
-When changing parser logic in `project/FastParseParser.scala`:
-1. Run `sbt generate` to regenerate with new parsing logic. The `(version, flag)` cache reuses prior `scalac -help` outputs, so you only re-run scalac for entries that haven't been seen.
-2. Review generated output for correctness
+When changing parser logic in `project/FastParseParser.scala`, the next `sbt compile` will re-run the sourceGenerator. The `(version, flag)` cache reuses prior `scalac -help` outputs, so you only re-run scalac for entries that haven't been seen. Review the regenerated traits under `target/scala-*/src_managed/` for correctness.
 
 ### Adding Custom Option Overrides
 
