@@ -1,12 +1,11 @@
 import scala.collection.immutable.{ListMap, SortedMap}
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success}
 
 
 object Generator {
   lazy val parser = FastParseParser
+
+  def scalacHelpFile(scalacHelpDir: os.Path, version: Versions.Minor, flag: String) =
+    scalacHelpDir / version.versionString / s"${flag.stripPrefix("-")}.txt"
 
   private def parseOutputs(version: Versions.Minor, outputs: Seq[(String, String)]) =
     outputs
@@ -62,19 +61,13 @@ object Generator {
 
   case class Result(allContainers: Seq[Container], versionMap: ListMap[String, String])
 
-  def getOutputs(versions: Seq[Versions.Minor])(runScalac: (Versions.Minor, String) => String) = Await.result(
-    Future.traverse(versions) { version =>
-      println(s"Getting output from $version")
-      Future
-        .traverse(version.helpFlags)(flag => Future(runScalac(version, flag)).map(flag -> _))
-        .map(pages => version -> pages)
-        .andThen {
-          case Success(_) => println(s"Finished getting output from $version")
-          case Failure(e) => Console.err.println(s"Failed to get output from $version: ${e.getMessage}")
+  def getOutputs(versions: Seq[Versions.Minor], scalacHelpDir: os.Path): Outputs =
+    versions.map { version =>
+      version ->
+        version.helpFlags.map { flag =>
+          flag -> os.read(scalacHelpFile(scalacHelpDir, version, flag))
         }
-    },
-    Duration.Inf
-  )
+    }
 
   type Outputs = Seq[(Versions.Minor, Seq[(String, String)])]
 

@@ -15,20 +15,18 @@ The library itself cross-builds on Scala 2.12 / 2.13 / 3.3 (see `build.sbt` for 
 
 `generate` runs automatically as a sourceGenerator step when you run `sbt compile`.
 `updateVersions` extends `versions.yaml` from Maven Central and is run by the `update-versions.yml` workflow, or manually via `sbt updateVersions`.
+`launcher/regenerateScalacHelp` rebuilds `scalac-help/` and is run by `update-versions.yml` after `updateVersions`, so the version-bump PR includes the matching help-text files.
 
 ## Architecture
 
 ### Code Generation Pipeline
 
-The library generates version-specific option traits from sbt tasks defined in the build:
+Version-specific option traits are produced by the following pipeline:
 
 1. **versions.yaml** - Defines Scala versions and their help flags (e.g., `-help`, `-X`, `-Y`)
-2. **Generator** (project/Generator.scala) - Orchestrates the generation pipeline:
-   - Fetches compiler JARs via Coursier
-   - Runs each compiler with help flags to extract available options
-   - Parses outputs using FastParseParser
-   - Builds inheritance hierarchy of option traits
-3. **Output** - Generated traits in `target/scala-*/src_managed/io/github/nafg/scalacoptions/options/`
+2. **scalac-help/** - Committed help-text outputs, one per `(version, flag)`. Rebuilt by `update-versions.yml` whenever new Scala versions are added.
+3. **Generator** (project/Generator.scala) - Reads those files, parses with FastParseParser, builds inheritance hierarchy of option traits.
+4. **Output** - Generated traits in `target/scala-*/src_managed/io/github/nafg/scalacoptions/options/`.
 
 ### Key Abstractions
 
@@ -49,7 +47,7 @@ Build-definition Scala code lives under `project/` so sbt can use it from build 
 - **project/Generator.scala** - Main orchestration logic
 - **project/Versions.scala** - Parses versions.yaml and models version hierarchy
 - **project/VersionUpdater.scala** - Queries Maven Central and extends top-most ranges in versions.yaml when new patch releases appear
-- **launcher/** subproject (`launcher/src/main/scala/.../launcher/Scalac.scala`) - Standalone main that fetches a compiler via Coursier and runs it in a forked JVM, capturing combined stdout+stderr. Wired into the build via the `runScalacFn` task.
+- **launcher/** subproject (`launcher/src/main/scala/.../launcher/Scalac.scala`) - Fetches a compiler via Coursier and runs it in a forked JVM, capturing combined stdout+stderr. Used both as a library by `OptionsAcceptanceSpec` and as a standalone main invoked once per `(version, flag)` by the `regenerateScalacHelp` task.
 - **project/FastParseParser.scala** - Parses scalac help text into Setting objects
 - **project/CodeGen.scala** - Generates trait method definitions
 - **project/Container.scala**, **project/Setting.scala**, **project/FlagSegment.scala** - Core data models
@@ -68,7 +66,7 @@ Generated traits go to `target/.../src_managed/` and are included as managed sou
 
 ### Modifying Option Parsing
 
-When changing parser logic in `project/FastParseParser.scala`, the next `sbt compile` will re-run the sourceGenerator. The `(version, flag)` cache reuses prior `scalac -help` outputs, so you only re-run scalac for entries that haven't been seen. Review the regenerated traits under `target/scala-*/src_managed/` for correctness.
+When changing parser logic in `project/FastParseParser.scala`, the next `sbt compile` will re-run the sourceGenerator against the committed `scalac-help/` files (no scalac invocation needed). Review the regenerated traits under `target/scala-*/src_managed/` for correctness.
 
 ### Adding Custom Option Overrides
 

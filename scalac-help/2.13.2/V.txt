@@ -1,0 +1,44 @@
+Usage: scalac <options> <source files>
+
+Verbose options:
+  -Vbrowse:<phases>                 Browse the abstract syntax tree after <phases>
+  -Vclasspath                       Output information about what classpath is being applied.
+  -Vdebug                           Increase the quantity of debugging output.
+  -Vdoc                             Trace scaladoc activity.
+  -Vfree-terms                      Print a message when reification creates a free term.
+  -Vfree-types                      Print a message when reification resorts to generating a free type.
+  -Vhot-statistics                  Enable `-Vstatistics` to also print hot statistics.
+  -Vide                             Generate, validate and output trees using the interactive compiler.
+  -Vimplicit-conversions            Print a message whenever an implicit conversion is inserted.
+  -Vimplicits                       Show more detail on why some implicits are not applicable.
+  -Vinline <package/Class.method>   Print a summary of inliner activity; `_` to print all, prefix match to select.
+  -Vissue                           Print stack traces when a context issues an error.
+  -Vlog:<phases>                    Log operations during <phases>
+  -Vmacro                           Trace macro activities: compilation, generation of synthetics, classloading, expansion, exceptions.
+  -Vmacro-lite                      Trace macro activities with less output.
+  -Vopt <package/Class.method>      Trace the optimizer progress for methods; `_` to print all, prefix match to select.
+  -Vpatmat                          Trace pattern matching translation.
+  -Vphases                          Print a synopsis of compiler phases.
+  -Vpos                             Trace position validation.
+  -Vprint:<phases>                  Print out program after <phases>
+  -Vprint-args <file>               Print all compiler arguments to the specified location. Use - to echo to the reporter.
+  -Vprint-pos                       Print tree positions, as offsets.
+  -Vprint-types                     Print tree types (debugging option).
+  -Vquasiquote                      Trace quasiquotations.
+  -Vreflective-calls                Print a message when a reflective method call is generated
+  -Vreify                           Trace reification.
+  -Vshow:<phases>                   (Requires -Xshow-class or -Xshow-object) Show after <phases>
+  -Vshow-class <class>              Show internal representation of class.
+  -Vshow-member-pos <output style>  Show start and end positions of members (implies -Yrangepos)
+  -Vshow-object <object>            Show internal representation of object.
+  -Vshow-symkinds                   Print abbreviated symbol kinds next to symbol names.
+  -Vshow-symowners                  Print owner identifiers next to symbol names.
+  -Vstatistics[:phases]             Print compiler statistics for specific phases <phases> (default: parser,typer,patmat,erasure,cleanup,jvm)
+  -Vsymbols                         Print the AST symbol hierarchy after each phase.
+  -Vtyper                           Trace type assignments.
+
+-- Note --
+Boolean settings generally are false unless set: -Xdev -Xcheck-init:true -Xprompt:false
+Multi-valued settings are comma-separated: -Xlint:infer-any,unused,-missing-interpolator
+Phases are a list of names, ids, or ranges of ids: -Vprint:parser,typer,5-10 -Ylog:-4
+Use _ to enable all: -language:_ -Vprint:_

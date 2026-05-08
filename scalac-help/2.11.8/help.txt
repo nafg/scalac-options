@@ -1,0 +1,35 @@
+Usage: scalac <options> <source files>
+where possible standard options include:
+  -Dproperty=value                Pass -Dproperty=value directly to the runtime system.
+  -J<flag>                        Pass <flag> directly to the runtime system.
+  -P:<plugin>:<opt>               Pass an option to a plugin
+  -X                              Print a synopsis of advanced options.
+  -bootclasspath <path>           Override location of bootstrap class files.
+  -classpath <path>               Specify where to find user class files.
+  -d <directory|jar>              destination for generated classfiles.
+  -dependencyfile <file>          Set dependency tracking file.
+  -deprecation                    Emit warning and location for usages of deprecated APIs.
+  -encoding <encoding>            Specify character encoding used by source files.
+  -explaintypes                   Explain type errors in more detail.
+  -extdirs <path>                 Override location of installed extensions.
+  -feature                        Emit warning and location for usages of features that should be imported explicitly.
+  -g:<level>                      Set level of generated debugging info. (none,source,line,vars,notailcalls) default:vars
+  -help                           Print a synopsis of standard options
+  -javabootclasspath <path>       Override java boot classpath.
+  -javaextdirs <path>             Override java extdirs classpath.
+  -language:<_,feature,-feature>  Enable or disable language features: `_' for all, `-language:help' to list
+  -no-specialization              Ignore @specialize annotations.
+  -nobootcp                       Do not use the boot classpath for the scala jars.
+  -nowarn                         Generate no warnings.
+  -optimise                       Generates faster bytecode by applying optimisations to the program
+  -print                          Print program with Scala-specific features removed.
+  -sourcepath <path>              Specify location(s) of source files.
+  -target:<target>                Target platform for object files. All JVM 1.5 targets are deprecated. (jvm-1.5,jvm-1.6,jvm-1.7,jvm-1.8) default:jvm-1.6
+  -toolcp <path>                  Add to the runner classpath.
+  -unchecked                      Enable additional warnings where generated code depends on assumptions.
+  -uniqid                         Uniquely tag all identifiers in debugging output.
+  -usejavacp                      Utilize the java.class.path in classpath resolution.
+  -usemanifestcp                  Utilize the manifest in classpath resolution.
+  -verbose                        Output messages about what the compiler is doing.
+  -version                        Print product version and exit.
+  @<file>                         A text file containing compiler arguments (options and source files)
