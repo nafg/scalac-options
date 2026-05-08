@@ -79,6 +79,21 @@ class OptionsAcceptanceSpec extends munit.FunSuite {
     }
   }
 
+  test("-java-output-version") {
+    assertAccepted { version =>
+      ScalacOptions.all(version)(
+        (opts: options.V3_1_2_+) => opts.javaOutputVersion("8"),
+        (opts: options.V3_2) => opts.javaOutputVersion("8"),
+        (opts: options.V3_3) => opts.javaOutputVersion("8"),
+        (opts: options.V3_4) => opts.javaOutputVersion("8"),
+        (opts: options.V3_5) => opts.javaOutputVersion("8"),
+        (opts: options.V3_6) => opts.javaOutputVersion("8"),
+        (opts: options.V3_7) => opts.javaOutputVersion("8"),
+        (opts: options.V3_8) => opts.javaOutputVersion("8")
+      )
+    }
+  }
+
   test("-Wconf") {
     assertAccepted { version =>
       ScalacOptions.all(version)(WarningsConfig(Filter.Category(Category.`lint-byname-implicit`).silent))
