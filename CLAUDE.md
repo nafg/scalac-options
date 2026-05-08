@@ -13,7 +13,8 @@ The library itself cross-builds on Scala 2.12 / 2.13 / 3.3 (see `build.sbt` for 
 - `sbt compile` - Compile the library (generated sources are produced as a sourceGenerator step)
 - `sbt test` - Run tests; `sbt +test` to cross-build against all Scala versions
 
-`updateVersions` (extends versions.yaml from Maven Central) and `generate` (the sourceGenerator) run automatically — via GitHub Actions or `sbt compile` — and shouldn't be invoked by hand.
+`generate` runs automatically as a sourceGenerator step when you run `sbt compile`.
+`updateVersions` extends `versions.yaml` from Maven Central and is run by the `update-versions.yml` workflow, or manually via `sbt updateVersions`.
 
 ## Architecture
 
