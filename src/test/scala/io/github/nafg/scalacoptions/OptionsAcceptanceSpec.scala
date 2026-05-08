@@ -1,6 +1,8 @@
 package io.github.nafg.scalacoptions
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Future, blocking}
 
 import io.github.nafg.scalacoptions.WarningsConfig.{Category, Filter}
 import io.github.nafg.scalacoptions.launcher.Scalac
@@ -20,23 +22,30 @@ class OptionsAcceptanceSpec extends munit.FunSuite {
 
   private def clue[A](name: String, value: A) = new Clue(name, value, "")
 
-  private def assertAccepted(makeFlags: String => List[String])(implicit location: Location): Unit =
-    ScalacOptions.versionMap.keys.foreach { version =>
-      val flags = makeFlags(version)
-      if (flags.nonEmpty) {
-        var rejected: Option[(String, String)] = None
-        Scalac.run(
-          version,
-          os.ProcessOutput.Readlines { line =>
-            if (rejected.isEmpty)
-              rejectionMarkers
-                .find(line.toLowerCase.contains)
-                .foreach(marker => rejected = Some((line, marker)))
-          },
-          flags: _*
-        )
-        rejected.foreach { case (line, markers) =>
-          fail("Invalid flag", clues(clue("version", version), clue("marker", markers), clue("line", line)))
+  private def assertAccepted(makeArgs: String => List[String])(implicit location: Location) =
+    Future.traverse(ScalacOptions.versionMap.keys.toList) { version =>
+      val args = makeArgs(version)
+      if (args.isEmpty)
+        Future.unit
+      else {
+        Future {
+          blocking {
+            println(s"Testing scalac $version with: ${args.mkString(" ")}")
+            var rejected: Option[(String, String)] = None
+            Scalac.run(
+              version,
+              os.ProcessOutput.Readlines { line =>
+                if (rejected.isEmpty)
+                  rejectionMarkers
+                    .find(line.toLowerCase.contains)
+                    .foreach(marker => rejected = Some((line, marker)))
+              },
+              args: _*
+            )
+            rejected.foreach { case (line, marker) =>
+              fail("Invalid flag", clues(clue("version", version), clue("marker", marker), clue("line", line)))
+            }
+          }
         }
       }
     }
