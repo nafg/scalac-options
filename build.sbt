@@ -13,7 +13,12 @@ ThisBuild / crossScalaVersions := Seq("2.12.21", "2.13.18", "3.3.7")
 ThisBuild / scalaVersion       := "2.12.21"
 ThisBuild / scalacOptions ++=
   ScalacOptions.all(scalaVersion.value)((opts: options.Common) => opts.deprecation ++ opts.feature)
-ThisBuild / scalacOptions ++= Seq("-release", "8")
+ThisBuild / scalacOptions ++=
+  ScalacOptions.all(scalaVersion.value)(
+    (opts: options.V2_12_17_+) => opts.release("8"),
+    (opts: options.V2_13_9_+) => opts.release("8"),
+    (opts: options.V3_2_+) => opts.javaOutputVersion("8")
+  )
 
 ThisBuild / organization := "io.github.nafg.scalac-options"
 
@@ -126,7 +131,7 @@ lazy val launcher =
 lazy val library = (project in file("."))
   .dependsOn(launcher % Test)
   .settings(
-    name := "scalac-options",
+    name               := "scalac-options",
     libraryDependencies ++= Seq(
       ("io.get-coursier" %% "coursier-core" % "2.1.24").cross(CrossVersion.for3Use2_13),
       "org.scalameta"    %% "munit"         % "1.3.0" % Test
