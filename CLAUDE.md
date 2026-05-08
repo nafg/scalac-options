@@ -13,9 +13,7 @@ The library itself cross-builds on Scala 2.12 / 2.13 / 3.3 (see `build.sbt` for 
 - `sbt compile` - Compile the generator and generated sources
 - `sbt updateVersions` - Query Maven Central and extend top-most ranges in versions.yaml for new patch releases
 - `sbt updateVersionsDryRun` - Same as above but does not modify the file
-- `sbt downloadScalaCompilerJars` - Prefetch all compiler artifacts from versions.yaml (run once after updating version list)
-- `sbt getOutputs` - Fetch and cache `scalac -help` outputs for all configured versions
-- `sbt generate` - Regenerate option traits under `target/scala-*/src_managed/io/github/nafg/scalacoptions`
+- `sbt generate` - Regenerate option traits under `target/scala-*/src_managed/io/github/nafg/scalacoptions` (fetches compilers and runs `scalac -help` lazily; results are cached per `(version, flag)`)
 - `sbt test` - Run tests
 
 ## Architecture
@@ -51,7 +49,7 @@ Build-definition Scala code lives under `project/` so sbt can use it from build 
 - **project/Generator.scala** - Main orchestration logic
 - **project/Versions.scala** - Parses versions.yaml and models version hierarchy
 - **project/VersionUpdater.scala** - Queries Maven Central and extends top-most ranges in versions.yaml when new patch releases appear
-- **project/GetHelpString.scala** - Downloads compiler JARs and extracts help output
+- **launcher/** subproject (`launcher/src/main/scala/.../launcher/Scalac.scala`) - Standalone main that fetches a compiler via Coursier and runs it in a forked JVM, capturing combined stdout+stderr. Wired into the build via the `runScalacFn` task.
 - **project/FastParseParser.scala** - Parses scalac help text into Setting objects
 - **project/CodeGen.scala** - Generates trait method definitions
 - **project/Container.scala**, **project/Setting.scala**, **project/FlagSegment.scala** - Core data models
@@ -71,16 +69,14 @@ Generated traits go to `target/.../src_managed/` and are included as managed sou
 ### Adding a New Scala Version
 
 1. Update `versions.yaml` with the new version range and help flags. For new patches in an existing major series, prefer `sbt updateVersionsDryRun` / `sbt updateVersions` to extend the top-most range automatically. New major series (e.g., 3.8) still need to be added by hand.
-2. Run `sbt downloadScalaCompilerJars` to fetch the new compiler
-3. Run `sbt generate` to regenerate option traits
-4. Review the git diff to verify new options were added correctly
+2. Run `sbt generate` to regenerate option traits (compiler JARs are fetched lazily by the launcher)
+3. Review the git diff to verify new options were added correctly
 
 ### Modifying Option Parsing
 
 When changing parser logic in `project/FastParseParser.scala`:
-1. Run `sbt getOutputs` to refresh cached outputs (if needed)
-2. Run `sbt generate` to regenerate with new parsing logic
-3. Review generated output for correctness
+1. Run `sbt generate` to regenerate with new parsing logic. The `(version, flag)` cache reuses prior `scalac -help` outputs, so you only re-run scalac for entries that haven't been seen.
+2. Review generated output for correctness
 
 ### Adding Custom Option Overrides
 

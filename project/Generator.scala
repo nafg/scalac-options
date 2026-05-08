@@ -1,6 +1,3 @@
-import coursier.core.{Module, ModuleName, Organization}
-import coursier.{Dependency, Fetch}
-
 import scala.collection.immutable.{ListMap, SortedMap}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -64,32 +61,6 @@ object Generator {
       )
 
   case class Result(allContainers: Seq[Container], versionMap: ListMap[String, String])
-
-  private def versions = Versions.loadVersions()
-
-  private def dependency(version: Versions.Minor) =
-    Dependency(
-      Module(
-        Organization("org.scala-lang"),
-        ModuleName(
-          version match {
-            case Versions.Minor(2, _, _, _, _, _)       => "scala-compiler"
-            case Versions.Minor(3, _, _, Some(_), _, _) => s"scala3-compiler_${version.versionString}"
-            case Versions.Minor(3, _, _, None, _, _)    => "scala3-compiler_3"
-            case _                                      => sys.error("Unsupported version: " + version)
-          }
-        ),
-        Map.empty
-      ),
-      version.versionString
-    )
-
-  def prefetch: Future[Unit] = prefetch(versions.flatMap(_.allMinors))
-
-  def prefetch(versions: Seq[Versions.Minor]) =
-    Fetch()
-      .addDependencies(versions.map(dependency)*)
-      .future().map(_ => ())
 
   def getOutputs(versions: Seq[Versions.Minor])(runScalac: (Versions.Minor, String) => String) = Await.result(
     Future.traverse(versions) { version =>
