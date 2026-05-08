@@ -28,7 +28,7 @@ where possible standard options include:
 [0m                -help[0m  Print a synopsis of standard options.
 [0m              -indent[0m  Together with -rewrite, remove {...} syntax when possible due to significant indentation.
 [0m -java-output-version[0m  Compile code with classes specific to the given version of the Java platform available on the classpath and emit bytecode for this version. Corresponds to -release flag in javac.
-                       Choices : 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+                       Choices : 8, 9, 10, 11, 12, 13, 14, 15, 16, 17
 [0m   -javabootclasspath[0m  Override java boot classpath.
 [0m         -javaextdirs[0m  Override java extdirs classpath.
 [0m            -language[0m  Enable one or more language features.

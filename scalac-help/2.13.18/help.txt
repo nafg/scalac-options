@@ -31,11 +31,11 @@ Standard options:
   -opt-warnings:<warnings>     Enable optimizer warnings, `help` for details.
   -print                       Print program with Scala-specific features removed. [false]
   -quickfix:<filters>          Apply quick fixes provided by the compiler for warnings and errors to source files
-  -release:<release>           Compile for a version of the Java API and target class file. (8,9,10,11,12,13,14,15,16,17,18,19,20,[21])
+  -release:<release>           Compile for a version of the Java API and target class file. (8,9,10,11,12,13,14,15,16,[17])
   -rootdir <path>              The absolute path of the project root directory, usually the git/scm checkout. Used by -Wconf.
   -sourcepath <path>           Specify location(s) of source files.
   -system <path>               Override location of Java system modules
-  -target:<target>             Target platform for object files. ([8],9,10,11,12,13,14,15,16,17,18,19,20,21)
+  -target:<target>             Target platform for object files. ([8],9,10,11,12,13,14,15,16,17)
   -toolcp <path>               Add to the runner classpath.
   -unchecked                   Enable additional warnings where generated code depends on assumptions. See also -Wconf. [false]
   -uniqid                      Uniquely tag all identifiers in debugging output. [false]
