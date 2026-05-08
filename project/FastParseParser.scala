@@ -76,7 +76,7 @@ object FastParseParser {
     private def descriptionEnd[_: P]: P[Unit] = P(End | "\n" ~ !continuationLineStart)
 
     private def choicesMarker[_: P]: P[Unit] =
-      P("Choices" ~ Text.spaces ~ ":" ~ Text.spaces ~ ("\n" ~ continuationLineStart).? ~ Text.spaces)
+      P("Choices" ~ Text.spaces ~ ":".? ~ Text.spaces ~ ("\n" ~ continuationLineStart).? ~ Text.spaces)
 
     private def choiceBlockBody[_: P]: P[Unit] =
       P((!descriptionEnd ~ AnyChar).rep)
