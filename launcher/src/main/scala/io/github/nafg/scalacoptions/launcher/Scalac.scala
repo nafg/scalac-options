@@ -14,7 +14,7 @@ object Scalac {
   def run(scalaVersion: String, stdout: os.ProcessOutput, scalacArgs: String*): Unit = {
     val (artifact, mainClass) =
       if (scalaVersion.startsWith("2."))
-        "scala-compiler"                 -> "scala.tools.nsc.Main"
+        "scala-compiler" -> "scala.tools.nsc.Main"
       else if (scalaVersion.contains("-"))
         s"scala3-compiler_$scalaVersion" -> "dotty.tools.dotc.Main"
       else
