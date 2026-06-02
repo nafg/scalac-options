@@ -134,7 +134,7 @@ lazy val library = (project in file("."))
     name               := "scalac-options",
     libraryDependencies ++= Seq(
       ("io.get-coursier" %% "coursier-core" % "2.1.24").cross(CrossVersion.for3Use2_13),
-      "org.scalameta"    %% "munit"         % "1.3.1" % Test
+      "org.scalameta"    %% "munit"         % "1.3.2" % Test
     ),
     Test / logBuffered := false,
 
