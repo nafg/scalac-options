@@ -9,7 +9,7 @@ import _root_.io.github.nafg.scalacoptions.{ScalacOptions, options}
 import sbt.complete.DefaultParsers.spaceDelimited
 
 
-ThisBuild / crossScalaVersions := Seq("2.12.21", "2.13.18", "3.3.7")
+ThisBuild / crossScalaVersions := Seq("2.12.21", "2.13.18", "3.3.8")
 ThisBuild / scalaVersion       := "2.12.21"
 ThisBuild / scalacOptions ++=
   ScalacOptions.all(scalaVersion.value)((opts: options.Common) => opts.deprecation ++ opts.feature)
