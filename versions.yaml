@@ -48,7 +48,7 @@
           - lit: '-language:'
           - param: features
   '3':
-    0..7:
+    0..8:
       helpFlags: [-help, -W, -X, -Y]
       settings:
         encoding:
@@ -98,7 +98,17 @@
           - lit: '-language:'
           - param: features
   '8':
-    0..3:
+    0..4:
+      helpFlags: [-help, -W, -X, -Y]
+      settings:
+        encoding:
+          - lit: '-encoding '
+          - param: encoding
+        language:
+          - lit: '-language:'
+          - param: features
+  '9':
+    0..0:
       helpFlags: [-help, -W, -X, -Y]
       settings:
         encoding:
