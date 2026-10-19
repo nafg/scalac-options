@@ -117,3 +117,13 @@
         language:
           - lit: '-language:'
           - param: features
+  '10':
+    0..0:
+      helpFlags: [-help, -W, -X, -Y]
+      settings:
+        encoding:
+          - lit: '-encoding '
+          - param: encoding
+        language:
+          - lit: '-language:'
+          - param: features
