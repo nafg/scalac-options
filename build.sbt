@@ -95,7 +95,7 @@ lazy val launcher =
       publish / skip       := true,
       libraryDependencies ++= Seq(
         ("io.get-coursier" %% "coursier" % "2.1.24").cross(CrossVersion.for3Use2_13),
-        "com.lihaoyi"      %% "os-lib"   % "0.11.8"
+        "com.lihaoyi"      %% "os-lib"   % "0.11.9"
       ),
       regenerateScalacHelp := {
         val log           = streams.value.log
