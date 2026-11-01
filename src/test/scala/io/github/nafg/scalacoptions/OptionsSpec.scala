@@ -2,7 +2,7 @@ package io.github.nafg.scalacoptions
 
 import scala.collection.immutable.SortedSet
 
-import coursier.core.Version
+import coursier.version.Version
 import munit.FunSuite
 
 

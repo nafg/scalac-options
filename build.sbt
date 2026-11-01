@@ -94,8 +94,8 @@ lazy val launcher =
     .settings(
       publish / skip       := true,
       libraryDependencies ++= Seq(
-        ("io.get-coursier" %% "coursier" % "2.1.24").cross(CrossVersion.for3Use2_13),
-        "com.lihaoyi"      %% "os-lib"   % "0.11.10"
+        "io.get-coursier" % "interface" % "1.0.29",
+        "com.lihaoyi"    %% "os-lib"    % "0.11.10"
       ),
       regenerateScalacHelp := {
         val log           = streams.value.log
@@ -133,8 +133,8 @@ lazy val library = (project in file("."))
   .settings(
     name               := "scalac-options",
     libraryDependencies ++= Seq(
-      ("io.get-coursier" %% "coursier-core" % "2.1.24").cross(CrossVersion.for3Use2_13),
-      "org.scalameta"    %% "munit"         % "1.3.6" % Test
+      "io.get-coursier" %% "versions" % "0.6.1",
+      "org.scalameta"   %% "munit"    % "1.3.6" % Test
     ),
     Test / logBuffered := false,
 

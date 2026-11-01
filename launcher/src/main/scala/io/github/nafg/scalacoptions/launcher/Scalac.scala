@@ -4,8 +4,7 @@ import java.io.File
 
 import scala.collection.concurrent.TrieMap
 
-import coursier.core.{Module, ModuleName, Organization}
-import coursier.{Dependency, Fetch}
+import coursierapi.{Dependency, Fetch}
 
 
 object Scalac {
@@ -22,8 +21,8 @@ object Scalac {
 
     val classpath = classpathCache.getOrElseUpdate(
       scalaVersion, {
-        val dep = Dependency(Module(Organization("org.scala-lang"), ModuleName(artifact), Map.empty), scalaVersion)
-        Fetch().addDependencies(dep).run().mkString(File.pathSeparator)
+        val dep = Dependency.of("org.scala-lang", artifact, scalaVersion)
+        Fetch.create().addDependencies(dep).fetch().toArray.mkString(File.pathSeparator)
       }
     )
 
