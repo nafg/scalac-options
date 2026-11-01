@@ -12,8 +12,7 @@ class OptionsSpec extends FunSuite {
 
   private def range(from: String, to: String): SortedSet[String] =
     SortedSet(ScalacOptions.sortedVersionMap.keys.toSeq: _*)
-      .from(new Version(from))
-      .until(new Version(to))
+      .range(new Version(from), new Version(to))
       .map(_.repr)
 
   test("V3_2_+ matches Scala 3.2 and later") {
