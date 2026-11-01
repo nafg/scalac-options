@@ -1,8 +1,8 @@
 package io.github.nafg.scalacoptions
 
-import coursier.core.Version
-
 import scala.collection.immutable.SortedMap
+
+import coursier.version.Version
 
 
 object ScalacOptions extends ScalacOptionsBase {
