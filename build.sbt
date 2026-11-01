@@ -24,10 +24,6 @@ ThisBuild / organization := "io.github.nafg.scalac-options"
 
 ThisBuild / versionScheme := Some("early-semver")
 
-// sbt-git defaults to JGit for read operations, but JGit 5.13.x doesn't support git worktrees
-// (NoWorkTreeException on load). Shell out to the `git` CLI instead. See sbt/sbt#2323.
-useReadableConsoleGit
-
 def runVersionUpdater(log: sbt.util.Logger, dryRun: Boolean): Unit =
   log.info(Await.result(new VersionUpdater().run(dryRun = dryRun), 5.minutes))
 
