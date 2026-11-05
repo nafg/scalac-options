@@ -129,7 +129,7 @@ lazy val library = (project in file("."))
   .settings(
     name               := "scalac-options",
     libraryDependencies ++= Seq(
-      "io.get-coursier" %% "versions" % "0.6.1",
+      "io.get-coursier" %% "versions" % "0.7.0",
       "org.scalameta"   %% "munit"    % "1.3.6" % Test
     ),
     Test / logBuffered := false,
