@@ -2,10 +2,9 @@ libraryDependencies += "com.lihaoyi"                   %% "fastparse"      % "3.
 libraryDependencies += "org.scalameta"                 %% "scalameta"      % "4.17.4"
 libraryDependencies += "com.lihaoyi"                   %% "os-lib"         % "0.11.10"
 libraryDependencies += "com.lihaoyi"                   %% "pprint"         % "0.9.6"
-libraryDependencies += "io.get-coursier"               %% "coursier"       % "2.1.24"
-libraryDependencies += "dev.zio"                       %% "zio-json-yaml"  % "1.1.2"
+libraryDependencies += "io.get-coursier"               %% "coursier"       % "2.1.26"
+libraryDependencies += "dev.zio"                       %% "zio-json-yaml"  % "1.0.0"
 libraryDependencies += "io.github.nafg.scalac-options" %% "scalac-options" % "0.7.0"
 
 scalacOptions += "-deprecation"
-scalacOptions += "-Xlint:_"
-scalacOptions += "-Ywarn-unused:-imports"
+scalacOptions += "-Wunused:privates,locals,explicits,implicits,patvars"

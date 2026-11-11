@@ -28,9 +28,13 @@ def runVersionUpdater(log: sbt.util.Logger, dryRun: Boolean): Unit =
   log.info(Await.result(new VersionUpdater().run(dryRun = dryRun), 5.minutes))
 
 val scalacHelpDir        = settingKey[os.Path]("Directory holding committed scalac help-text files")
+@transient
 val updateVersions       = taskKey[Unit]("Update versions.yaml with latest Scala releases from Maven Central")
+@transient
 val updateVersionsDryRun = taskKey[Unit]("Check for new Scala versions without modifying versions.yaml")
+@transient
 val regenerateScalacHelp = taskKey[Unit]("Regenerate files in scalac-help/")
+@transient
 val generate             = inputKey[Seq[File]]("Generate code. Optionally pass one or more Scala versions.")
 
 ThisBuild / scalacHelpDir := os.Path((ThisBuild / baseDirectory).value) / "scalac-help"
@@ -95,6 +99,7 @@ lazy val launcher =
       ),
       regenerateScalacHelp := {
         val log           = streams.value.log
+        given FileConverter = fileConverter.value
         val cp            = (Compile / fullClasspath).value.files
         val scalaRunner   = (Compile / runner).value
         val mainClassName = (Compile / mainClass).value.getOrElse(sys.error("No main class in launcher"))
@@ -149,10 +154,5 @@ lazy val library = (project in file("."))
       }
     }.evaluated,
 
-    Compile / sourceGenerators += generate.toTask("").taskValue,
-
-    Compile / packageSrc / mappings ++=
-      generate.toTask("").value.pair(
-        Path.relativeTo((Compile / sourceManaged).value) | Path.flat
-      )
+    Compile / sourceGenerators += generate.toTask("").taskValue
   )

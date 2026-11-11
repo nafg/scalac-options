@@ -25,9 +25,7 @@ object Generator {
           unique
       }
       .toSeq
-      .sortBy(_.name)(
-        Ordering.comparatorToOrdering(String.CASE_INSENSITIVE_ORDER)
-      )
+      .sortBy(_.name)(using Ordering.comparatorToOrdering(using String.CASE_INSENSITIVE_ORDER))
 
   private def common(settingsGroups: Seq[Seq[Setting]]): Seq[Setting] =
     settingsGroups
@@ -55,9 +53,7 @@ object Generator {
       }
       .values
       .toSeq
-      .sortBy(_.name)(
-        Ordering.comparatorToOrdering(String.CASE_INSENSITIVE_ORDER)
-      )
+      .sortBy(_.name)(using Ordering.comparatorToOrdering(using String.CASE_INSENSITIVE_ORDER))
 
   case class Result(allContainers: Seq[Container], versionMap: ListMap[String, String])
 
@@ -106,10 +102,10 @@ object Generator {
       Generator.common(versionGroup.map(_._2))
 
     val commonAll        = common(allSettings)
-    val commonEpoch      = groupedEpoch.mapValues(common)
-    val commonMinorRange = groupedMinorRange.mapValues(common)
-    val commonMajor      = groupedMajor.mapValues(common)
-    val commonRange      = groupedRange.mapValues(common)
+    val commonEpoch      = groupedEpoch.transform((_, group) => common(group))
+    val commonMinorRange = groupedMinorRange.transform((_, group) => common(group))
+    val commonMajor      = groupedMajor.transform((_, group) => common(group))
+    val commonRange      = groupedRange.transform((_, group) => common(group))
 
     def printCommonCounts[K](group: Iterable[(K, Seq[Setting])])(show: K => String): Unit =
       for ((k, s) <- group) println(s"${show(k)}: ${s.length} common settings")

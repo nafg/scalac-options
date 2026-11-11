@@ -7,35 +7,35 @@ import scala.io.AnsiColor
 
 object FastParseParser {
   private object Text {
-    def spaces[_: P]       = P(" ".rep)
-    def lineEnd[_: P]      = P("\n" | End)
-    def untilLineEnd[_: P] = P(CharsWhile(_ != '\n', 0).! ~ lineEnd)
-    def letters[_: P]      = P(CharsWhile(_.isLetter))
+    def spaces[$: P]       = P(" ".rep)
+    def lineEnd[$: P]      = P("\n" | End)
+    def untilLineEnd[$: P] = P(CharsWhile(_ != '\n', 0).! ~ lineEnd)
+    def letters[$: P]      = P(CharsWhile(_.isLetter))
   }
 
   private object Flags {
-    def settingLineStart[_: P] = P("--" | "-" ~ (CharIn("A-Z") | Text.letters) | "@")
+    def settingLineStart[$: P] = P("--" | "-" ~ (CharIn("A-Z") | Text.letters) | "@")
 
-    private def placeholder[_: P] = P(
+    private def placeholder[$: P] = P(
       ("<<" ~ CharsWhile(_ != '>').! ~ ">>") |
         ("<" ~ CharsWhile(_ != '>').! ~ ">")
     )
 
-    private def paramFlagName[_: P]: P[List[FlagSegment]] = P(
-      ("-" ~ Text.letters ~ " ").!.map(FlagSegment.Literal)
-        ~ placeholder.map(FlagSegment.Parameter)
+    private def paramFlagName[$: P]: P[List[FlagSegment]] = P(
+      ("-" ~ Text.letters ~ " ").!.map(FlagSegment.Literal(_))
+        ~ placeholder.map(FlagSegment.Parameter(_))
     ).map { case (l, p) => List(l, p) }
 
-    private def flagName[_: P]: P[Seq[FlagSegment]] = P(
-      "-".!.map(FlagSegment.Literal)
+    private def flagName[$: P]: P[Seq[FlagSegment]] = P(
+      "-".!.map(FlagSegment.Literal(_))
         ~ (
-          CharsWhile(c => c == '-' || c == ':' || c.isLetter).!.map(FlagSegment.Literal) |
-            placeholder.map(FlagSegment.Parameter)
+          CharsWhile(c => c == '-' || c == ':' || c.isLetter).!.map(FlagSegment.Literal(_)) |
+            placeholder.map(FlagSegment.Parameter(_))
         )
           .rep(1)
     ).map { case (segment, segments) => segment +: segments }
 
-    private def propertyFlag[_: P] = P(
+    private def propertyFlag[$: P] = P(
       ("-D" + "property=value").!.map { _ =>
         List(
           FlagSegment.Literal("-D"),
@@ -46,12 +46,12 @@ object FastParseParser {
       }
     )
 
-    private def fileFlag[_: P] = P {
-      ("@".!.map(FlagSegment.Literal) ~ placeholder.map(FlagSegment.Parameter))
+    private def fileFlag[$: P] = P {
+      ("@".!.map(FlagSegment.Literal(_)) ~ placeholder.map(FlagSegment.Parameter(_)))
         .map { case (l, p) => List(l, p) }
     }
 
-    def settingName[_: P] = P(
+    def settingName[$: P] = P(
       Text.spaces
         ~ !"-- "
         ~ (fileFlag | propertyFlag | paramFlagName | flagName)
@@ -62,39 +62,39 @@ object FastParseParser {
   private object Descriptions {
     // 8-space minimum captures both Scala 3.0+ continuations (typically 22-space indent) and
     // Scala 3.1/3.2 -Wunused continuations (9-space indent), where the "Choices:" line lives.
-    private def continuationLineStart[_: P] = P(" ".rep(8) ~ Text.spaces ~ !Flags.settingLineStart)
+    private def continuationLineStart[$: P] = P(" ".rep(8) ~ Text.spaces ~ !Flags.settingLineStart)
 
-    private def continuation[_: P]: P[String] =
+    private def continuation[$: P]: P[String] =
       P("\n" ~ continuationLineStart).map(_ => " ")
 
-    private def descriptionChar[_: P]: P[String] =
+    private def descriptionChar[$: P]: P[String] =
       P(CharPred(_ != '\n').! | continuation)
 
-    private def descriptionUntilChoices[_: P]: P[String] =
+    private def descriptionUntilChoices[$: P]: P[String] =
       P((!"Choices" ~ descriptionChar).rep.map(_.mkString))
 
-    private def descriptionEnd[_: P]: P[Unit] = P(End | "\n" ~ !continuationLineStart)
+    private def descriptionEnd[$: P]: P[Unit] = P(End | "\n" ~ !continuationLineStart)
 
-    private def choicesMarker[_: P]: P[Unit] =
+    private def choicesMarker[$: P]: P[Unit] =
       P("Choices" ~ Text.spaces ~ ":".? ~ Text.spaces ~ ("\n" ~ continuationLineStart).? ~ Text.spaces)
 
-    private def choiceBlockBody[_: P]: P[Unit] =
+    private def choiceBlockBody[$: P]: P[Unit] =
       P((!descriptionEnd ~ AnyChar).rep)
 
-    private def descriptionWithChoices[_: P]: P[(String, Boolean)] =
+    private def descriptionWithChoices[$: P]: P[(String, Boolean)] =
       P(descriptionUntilChoices ~ choicesMarker ~ choiceBlockBody ~ Text.lineEnd)
         .map(_.trim -> true)
 
-    private def plainDescription[_: P]: P[(String, Boolean)] =
+    private def plainDescription[$: P]: P[(String, Boolean)] =
       P(descriptionChar.rep.map(_.mkString) ~ Text.lineEnd)
         .map(_ -> false)
 
-    def description[_: P]: P[(String, Boolean)] =
+    def description[$: P]: P[(String, Boolean)] =
       P(descriptionWithChoices | plainDescription)
   }
 
   private object Sections {
-    private def settingLine[_: P] = P(
+    private def settingLine[$: P] = P(
       (Flags.settingName ~ Text.spaces ~ Descriptions.description)
         .map { case (flagSegments, (descText, hasChoices)) =>
           def literals(flagSegments: Seq[FlagSegment]) = flagSegments.collect { case FlagSegment.Literal(text) => text }
@@ -114,12 +114,12 @@ object FastParseParser {
         }
     )
 
-    private def settingsCluster[_: P] = P(settingLine.rep(1))
-    private def notSettingLine[_: P]  = P(!settingLine ~ Text.untilLineEnd)
-    private def sectionHeader[_: P]   = P(notSettingLine.!.rep(min = 1, max = 20).map(_.last))
-    private def settingsGroup[_: P]   = P(sectionHeader ~ settingsCluster)
+    private def settingsCluster[$: P] = P(settingLine.rep(1))
+    private def notSettingLine[$: P]  = P(!settingLine ~ Text.untilLineEnd)
+    private def sectionHeader[$: P]   = P(notSettingLine.!.rep(min = 1, max = 20).map(_.last))
+    private def settingsGroup[$: P]   = P(sectionHeader ~ settingsCluster)
 
-    def parser[_: P] =
+    def parser[$: P] =
       P(settingsGroup.rep(1) ~ notSettingLine.rep(min = 0, max = 6)).map(_._1)
   }
 
@@ -148,7 +148,7 @@ object FastParseParser {
     */
   def parse(text: String, sourceName: String = "unknown source"): Map[String, Seq[Setting]] = {
     val textWithoutANSI = ansiRegex.replaceAllIn(text, "")
-    fastparse.parse(textWithoutANSI, Sections.parser(_), verboseFailures = true) match {
+    fastparse.parse(textWithoutANSI, Sections.parser(using _), verboseFailures = true) match {
       case Parsed.Success(groups, index) =>
         val asMap     = groups.toMap.map { case (name, settings) =>
           if (name.trim == "Deprecated settings:")

@@ -3,7 +3,8 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.math.Ordering.Implicits.infixOrderingOps
 
 import coursier.Versions as CoursierVersions
-import coursier.core.{Module, ModuleName, Organization, Version}
+import coursier.core.{Module, ModuleName, Organization}
+import coursier.version.Version
 import org.yaml.snakeyaml.DumperOptions.FlowStyle
 import sbt.io.IO
 import sbt.io.syntax.file
@@ -22,15 +23,16 @@ class VersionUpdater(implicit ec: ExecutionContext) {
       .map { results =>
         val releaseVersions =
           results
-            .flatMap(_.versions.available.map(Version(_).items))
+            .flatMap(_.versions.available0.map(_.items))
             .collect { case Vector(x: Version.Number, y: Version.Number, z: Version.Number) =>
               (x.value, y.value, z.value)
             }
             .filter(_ >= (2, 11, 0))
-        SortedMap.empty[Int, SortedMap[Int, Set[Int]]] ++
-          releaseVersions.groupBy(_._1).mapValues { byEpoch =>
-            byEpoch.groupBy(_._2).mapValues(_.map(_._3).toSet)
+        SortedMap.from(
+          releaseVersions.groupBy(_._1).map { case (epoch, byEpoch) =>
+            epoch -> SortedMap.from(byEpoch.groupMapReduce(_._2)(v => Set(v._3))(_ ++ _))
           }
+        )
       }
 
   private def render(vf: Versions.VersionFile): String =
