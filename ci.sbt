@@ -3,16 +3,16 @@ import _root_.io.github.nafg.mergify.dsl._
 
 inThisBuild(
   List(
-    homepage                            := Some(url("https://github.com/nafg/scalac-options")),
+    homepage                            := Some(uri("https://github.com/nafg/scalac-options")),
     licenses                            := List(
-      "Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")
+      "Apache-2.0" -> uri("https://www.apache.org/licenses/LICENSE-2.0")
     ),
     developers                          := List(
       Developer(
         "nafg",
         "Naftoli Gugenheim",
         "98384+nafg@users.noreply.github.com",
-        url("https://github.com/nafg")
+        uri("https://github.com/nafg")
       )
     ),
     dynverGitDescribeOutput ~=
@@ -23,6 +23,8 @@ inThisBuild(
     githubWorkflowJavaVersions          := Seq(JavaSpec.zulu("17")),
     githubWorkflowScalaVersions         := githubWorkflowScalaVersions.value.map(_.replaceFirst("\\d+$", "x")),
     githubWorkflowTargetTags ++= Seq("v*"),
+    // sbt 2's `test` only reruns tests affected by changes, so CI needs testFull
+    githubWorkflowBuild                 := Seq(WorkflowStep.Sbt(List("testFull"), name = Some("Build project"))),
     githubWorkflowPublishTargetBranches := Seq(
       RefPredicate.StartsWith(Ref.Tag("v"))
     ),

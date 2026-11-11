@@ -74,10 +74,10 @@ object Versions {
             VersionFile.EpochVersionConfig(SortedMap())
               .addVersions(
                 majors,
-                epochs.until(epoch).values.lastOption
+                epochs.rangeUntil(epoch).values.lastOption
                   .flatMap(_.majors.values.lastOption.flatMap(_.ranges.values.lastOption))
                   .orElse(
-                    epochs.from(epoch).values.headOption
+                    epochs.rangeFrom(epoch).values.headOption
                       .flatMap(_.majors.values.headOption.flatMap(_.ranges.values.headOption))
                   )
                   .getOrElse(VersionConfig(Nil))
@@ -99,8 +99,8 @@ object Versions {
               EpochVersionConfig.MajorVersionConfig(SortedMap())
                 .addVersions(
                   patches,
-                  majors.until(major).values.lastOption.flatMap(_.ranges.values.lastOption)
-                    .orElse(majors.from(major).values.headOption.flatMap(_.ranges.values.headOption))
+                  majors.rangeUntil(major).values.lastOption.flatMap(_.ranges.values.lastOption)
+                    .orElse(majors.rangeFrom(major).values.headOption.flatMap(_.ranges.values.headOption))
                     .getOrElse(defaultVersionConfig)
                 )
             }
@@ -118,8 +118,8 @@ object Versions {
             expanded ++
               missing.map { patch =>
                 patch ->
-                  expanded.until(patch).values.lastOption
-                    .orElse(expanded.from(patch).values.headOption)
+                  expanded.rangeUntil(patch).values.lastOption
+                    .orElse(expanded.rangeFrom(patch).values.headOption)
                     .getOrElse(defaultVersionConfig)
               }
           MajorVersionConfig(
