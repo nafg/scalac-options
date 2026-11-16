@@ -118,7 +118,7 @@
           - lit: '-language:'
           - param: features
   '10':
-    0..0:
+    0..1:
       helpFlags: [-help, -W, -X, -Y]
       settings:
         encoding:
